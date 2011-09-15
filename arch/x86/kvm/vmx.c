@@ -39,6 +39,8 @@
 #include <asm/mce.h>
 #include <asm/i387.h>
 #include <asm/xcr.h>
+#include <asm/perf_event.h>
+#include <asm/traps.h>
 
 #include "trace.h"
 
