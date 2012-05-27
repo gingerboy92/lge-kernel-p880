@@ -116,8 +116,8 @@ void tegra_dvfs_rail_pause(struct dvfs_rail *rail, ktime_t delta, bool on);
 struct dvfs_rail *tegra_dvfs_get_rail_by_name(const char *reg_id);
 int tegra_dvfs_predict_millivolts(struct clk *c, unsigned long rate);
 int tegra_dvfs_alt_freqs_set(struct dvfs *d, unsigned long *alt_freqs);
-int tegra_cpu_dvfs_alter(int edp_thermal_index, const cpumask_t *cpus,
-			 bool before_clk_update, int cpu_event);
+void tegra_cpu_dvfs_alter(
+	int edp_thermal_index, const cpumask_t *cpus, bool before_clk_update);
 #else
 static inline void tegra_soc_init_dvfs(void)
 {}
@@ -151,8 +151,8 @@ static inline int tegra_dvfs_predict_millivolts(struct clk *c, unsigned long rat
 static inline int tegra_dvfs_alt_freqs_set(struct dvfs *d,
 					   unsigned long *alt_freqs)
 { return 0; }
-static inline int tegra_cpu_dvfs_alter(int edp_thermal_index,
-		 const cpumask_t *cpus, bool before_clk_update, int cpu_event)
+static inline void tegra_cpu_dvfs_alter(
+	int edp_thermal_index, const cpumask_t *cpus, bool before_clk_update)
 {}
 #endif
 
