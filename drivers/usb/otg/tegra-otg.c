@@ -68,6 +68,11 @@ struct tegra_otg_data {
 
 static struct tegra_otg_data *tegra_clone;
 
+#ifdef CONFIG_USB_OTG_ON_CHARGING
+static bool tegra_otg_on_charging = false;
+module_param(tegra_otg_on_charging, bool, 0664);
+#endif
+
 static inline unsigned long otg_readl(struct tegra_otg_data *tegra,
 				      unsigned int offset)
 {
@@ -208,6 +213,7 @@ static void tegra_change_otg_state(struct tegra_otg_data *tegra,
 		dev_info(tegra->otg.dev, "%s --> %s\n", tegra_state_name(from),
 					      tegra_state_name(to));
 
+<<<<<<< HEAD
 		if (from == OTG_STATE_A_SUSPEND) {
 			if (to == OTG_STATE_B_PERIPHERAL && otg->gadget) {
 				usb_gadget_vbus_connect(otg->gadget);
@@ -219,6 +225,19 @@ static void tegra_change_otg_state(struct tegra_otg_data *tegra,
 			}
 		} else if (from == OTG_STATE_A_HOST) {
 			if (to == OTG_STATE_A_SUSPEND) {
+=======
+		if (tegra->charger_cb) {
+			if (tegra_otg_on_charging)
+				/* enable v_bus detection for charging */
+				tegra->detect_vbus = true;
+			else
+				/* enable OTG to supply internal power */
+				tegra->charger_cb(to, from, tegra->charger_cb_data);				
+		}
+
+		if (to == OTG_STATE_A_SUSPEND) {
+			if (from == OTG_STATE_A_HOST)
+>>>>>>> 41e4e5a... tegra-otg: HACK to allow OTG peripheral and charging at the same time
 				tegra_stop_host(tegra);
 				tegra_otg_notify_event(otg, USB_EVENT_NONE);
 			}
