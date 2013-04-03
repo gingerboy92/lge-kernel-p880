@@ -69,6 +69,16 @@ enum {
 	TEGRA_CPQ_SWITCH_TO_G,
 };
 
+unsigned int tegra_cpq_max_cpus(void)
+{
+	return max_cpus;
+}
+
+unsigned int tegra_cpq_min_cpus(void)
+{
+	return min_cpus;
+}
+
 static int cpq_state;
 
 static int update_core_config(unsigned int cpunumber, bool up)

@@ -21,7 +21,6 @@
 #include <linux/cpumask.h>
 #include <linux/module.h>
 #include <linux/cpufreq.h>
-#include <linux/pm_qos_params.h>
 #include <linux/jiffies.h>
 #include <linux/slab.h>
 #include <linux/cpu.h>
@@ -30,6 +29,10 @@
 #include <asm/cputime.h>
 
 #define CPUNAMELEN 8
+
+// from cpuquiet.c
+extern unsigned int tegra_cpq_max_cpus(void);
+extern unsigned int tegra_cpq_min_cpus(void);
 
 typedef enum {
 	CPU_SPEED_BALANCED,
@@ -190,7 +193,7 @@ static CPU_SPEED_BALANCE balanced_speed_balance(void)
 	unsigned long balanced_speed = highest_speed * balance_level / 100;
 	unsigned long skewed_speed = balanced_speed / 2;
 	unsigned int nr_cpus = num_online_cpus();
-	unsigned int max_cpus = pm_qos_request(PM_QOS_MAX_ONLINE_CPUS) ? : 4;
+	unsigned int max_cpus = tegra_cpq_max_cpus();
 #ifdef CONFIG_TEGRA_RUNNABLE_THREAD
 	unsigned int avg_nr_run = avg_nr_running();
 	unsigned int nr_run;
@@ -234,6 +237,9 @@ static void balanced_work_func(struct work_struct *work)
 #ifdef CONFIG_TEGRA_RUNNABLE_THREAD
 	unsigned long now = jiffies;
 #endif
+
+	unsigned int nr_cpus = num_online_cpus();
+	unsigned int min_cpus = tegra_cpq_min_cpus();
 
 	CPU_SPEED_BALANCE balance;
 
@@ -286,6 +292,10 @@ static void balanced_work_func(struct work_struct *work)
 	if (!up && ((now - last_change_time) < down_delay))
 		cpu = nr_cpu_ids;
 #endif
+
+	// min_cpu restriction
+	if (!up && nr_cpus == min_cpus)
+		cpu = nr_cpu_ids;
 
 	if (cpu < nr_cpu_ids) {
 #ifdef CONFIG_TEGRA_RUNNABLE_THREAD
