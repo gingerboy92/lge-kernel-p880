@@ -310,7 +310,9 @@ static int rq_stats_sysfs(void)
 
 static void rq_stats_device_busy(void)
 {
+#if DEBUG
 	pr_info(RQ_STATS_TAG "rq_stats_device_busy");
+#endif
 	if (rq_stats_state != DISABLED) {
 		rq_stats_state = DISABLED;
 		cancel_delayed_work_sync(&rq_stats_work);
@@ -319,7 +321,9 @@ static void rq_stats_device_busy(void)
 
 static void rq_stats_device_free(void)
 {
+#if DEBUG
 	pr_info(RQ_STATS_TAG "rq_stats_device_free");
+#endif
 	if (rq_stats_state == DISABLED) {
 		rq_stats_state = IDLE;
 		rq_stats_work_func(NULL);
