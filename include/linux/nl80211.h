@@ -492,6 +492,35 @@
  *	this command may also be sent by the driver as an MLME event to
  *	inform userspace of the new replay counter.
  *
+ * @NL80211_CMD_PMKSA_CANDIDATE: This is used as an event to inform userspace
+ *	of PMKSA caching dandidates.
+ *
+ * @NL80211_CMD_TDLS_OPER: Perform a high-level TDLS command (e.g. link setup).
+ * @NL80211_CMD_TDLS_MGMT: Send a TDLS management frame.
+ *
+ * @NL80211_CMD_UNEXPECTED_FRAME: Used by an application controlling an AP
+ *	(or GO) interface (i.e. hostapd) to ask for unexpected frames to
+ *	implement sending deauth to stations that send unexpected class 3
+ *	frames. Also used as the event sent by the kernel when such a frame
+ *	is received.
+ *	For the event, the %NL80211_ATTR_MAC attribute carries the TA and
+ *	other attributes like the interface index are present.
+ *	If used as the command it must have an interface index and you can
+ *	only unsubscribe from the event by closing the socket.
+ *
+ * @NL80211_CMD_PROBE_CLIENT: Probe an associated station on an AP interface
+ *	by sending a null data frame to it and reporting when the frame is
+ *	acknowleged. This is used to allow timing out inactive clients. Uses
+ *	%NL80211_ATTR_IFINDEX and %NL80211_ATTR_MAC. The command returns a
+ *	direct reply with an %NL80211_ATTR_COOKIE that is later used to match
+ *	up the event with the request. The event includes the same data and
+ *	has %NL80211_ATTR_ACK set if the frame was ACKed.
+ *
+ * @NL80211_CMD_REGISTER_BEACONS: Register this socket to receive beacons from
+ *	other BSSes when any interfaces are in AP mode. This helps implement
+ *	OLBC handling in hostapd. Beacons are reported in %NL80211_CMD_FRAME
+ *	messages. Note that per PHY only one application may register.
+ *
  * @NL80211_CMD_MAX: highest used command number
  * @__NL80211_CMD_AFTER_LAST: internal use
  */
@@ -639,6 +668,17 @@ enum nl80211_commands {
 	NL80211_CMD_SET_NOACK_MAP,
 #endif
 
+	NL80211_CMD_PMKSA_CANDIDATE,
+
+	NL80211_CMD_TDLS_OPER,
+	NL80211_CMD_TDLS_MGMT,
+
+	NL80211_CMD_UNEXPECTED_FRAME,
+
+	NL80211_CMD_PROBE_CLIENT,
+
+	NL80211_CMD_REGISTER_BEACONS,
+
 	/* add new commands above here */
 
 	/* used to define NL80211_CMD_MAX below */
@@ -785,6 +825,8 @@ enum nl80211_commands {
  *	that can be added to a scan request
  * @NL80211_ATTR_MAX_SCHED_SCAN_IE_LEN: maximum length of information
  *	elements that can be added to a scheduled scan request
+ * @NL80211_ATTR_MAX_MATCH_SETS: maximum number of sets that can be
+ *	used with @NL80211_ATTR_SCHED_SCAN_MATCH, a wiphy attribute.
  *
  * @NL80211_ATTR_SCAN_FREQUENCIES: nested attribute with frequencies (in MHz)
  * @NL80211_ATTR_SCAN_SSIDS: nested attribute with SSIDs, leave out for passive
@@ -990,8 +1032,6 @@ enum nl80211_commands {
  * @NL80211_ATTR_WIPHY_ANTENNA_AVAIL_RX: Bitmap of antennas which are available
  *	for configuration as RX antennas via the above parameters.
  *
- * @NL80211_ATTR_SCAN_FLAGS: scan request control flags (u32)
- *
  * @NL80211_ATTR_MCAST_RATE: Multicast tx rate (in 100 kbps) for IBSS
  *
  * @NL80211_ATTR_OFFCHANNEL_TX_OK: For management frame TX, the frame may be
@@ -1027,6 +1067,24 @@ enum nl80211_commands {
 
  * @NL80211_ATTR_SCHED_SCAN_INTERVAL: Interval between scheduled scan
  *	cycles, in msecs.
+
+ * @NL80211_ATTR_SCHED_SCAN_MATCH: Nested attribute with one or more
+ *	sets of attributes to match during scheduled scans.  Only BSSs
+ *	that match any of the sets will be reported.  These are
+ *	pass-thru filter rules.
+ *	For a match to succeed, the BSS must match all attributes of a
+ *	set.  Since not every hardware supports matching all types of
+ *	attributes, there is no guarantee that the reported BSSs are
+ *	fully complying with the match sets and userspace needs to be
+ *	able to ignore them by itself.
+ *	Thus, the implementation is somewhat hardware-dependent, but
+ *	this is only an optimization and the userspace application
+ *	needs to handle all the non-filtered results anyway.
+ *	If the match attributes don't make sense when combined with
+ *	the values passed in @NL80211_ATTR_SCAN_SSIDS (eg. if an SSID
+ *	is included in the probe request, but the match attributes
+ *	will never let it go through), -EINVAL may be returned.
+ *	If ommited, no filtering is done.
  *
  * @NL80211_ATTR_INTERFACE_COMBINATIONS: Nested attribute listing the supported
  *	interface combinations. In each nested item, it contains attributes
@@ -1043,6 +1101,57 @@ enum nl80211_commands {
  *	nested array attribute containing an entry for each band, with the entry
  *	being a list of supported rates as defined by IEEE 802.11 7.3.2.2 but
  *	without the length restriction (at most %NL80211_MAX_SUPP_RATES).
+ *
+ * @NL80211_ATTR_HIDDEN_SSID: indicates whether SSID is to be hidden from Beacon
+ *	and Probe Response (when response to wildcard Probe Request); see
+ *	&enum nl80211_hidden_ssid, represented as a u32
+ *
+ * @NL80211_ATTR_IE_PROBE_RESP: Information element(s) for Probe Response frame.
+ *	This is used with %NL80211_CMD_NEW_BEACON and %NL80211_CMD_SET_BEACON to
+ *	provide extra IEs (e.g., WPS/P2P IE) into Probe Response frames when the
+ *	driver (or firmware) replies to Probe Request frames.
+ * @NL80211_ATTR_IE_ASSOC_RESP: Information element(s) for (Re)Association
+ *	Response frames. This is used with %NL80211_CMD_NEW_BEACON and
+ *	%NL80211_CMD_SET_BEACON to provide extra IEs (e.g., WPS/P2P IE) into
+ *	(Re)Association Response frames when the driver (or firmware) replies to
+ *	(Re)Association Request frames.
+ *
+ * @NL80211_ATTR_STA_WME: Nested attribute containing the wme configuration
+ *	of the station, see &enum nl80211_sta_wme_attr.
+ * @NL80211_ATTR_SUPPORT_AP_UAPSD: the device supports uapsd when working
+ *	as AP.
+ *
+ * @NL80211_ATTR_ROAM_SUPPORT: Indicates whether the firmware is capable of
+ *	roaming to another AP in the same ESS if the signal lever is low.
+ *
+ * @NL80211_ATTR_PMKSA_CANDIDATE: Nested attribute containing the PMKSA caching
+ *	candidate information, see &enum nl80211_pmksa_candidate_attr.
+ *
+ * @NL80211_ATTR_TX_NO_CCK_RATE: Indicates whether to use CCK rate or not
+ *	for management frames transmission. In order to avoid p2p probe/action
+ *	frames are being transmitted at CCK rate in 2GHz band, the user space
+ *	applications use this attribute.
+ *	This attribute is used with %NL80211_CMD_TRIGGER_SCAN and
+ *	%NL80211_CMD_FRAME commands.
+ *
+ * @NL80211_ATTR_TDLS_ACTION: Low level TDLS action code (e.g. link setup
+ *	request, link setup confirm, link teardown, etc.). Values are
+ *	described in the TDLS (802.11z) specification.
+ * @NL80211_ATTR_TDLS_DIALOG_TOKEN: Non-zero token for uniquely identifying a
+ *	TDLS conversation between two devices.
+ * @NL80211_ATTR_TDLS_OPERATION: High level TDLS operation; see
+ *	&enum nl80211_tdls_operation, represented as a u8.
+ * @NL80211_ATTR_TDLS_SUPPORT: A flag indicating the device can operate
+ *	as a TDLS peer sta.
+ * @NL80211_ATTR_TDLS_EXTERNAL_SETUP: The TDLS discovery/setup and teardown
+ *	procedures should be performed by sending TDLS packets via
+ *	%NL80211_CMD_TDLS_MGMT. Otherwise %NL80211_CMD_TDLS_OPER should be
+ *	used for asking the driver to perform a TDLS operation.
+ *
+ * @NL80211_ATTR_DEVICE_AP_SME: This u32 attribute may be listed for devices
+ *	that have AP support to indicate that they have the AP SME integrated
+ *	with support for the features listed in this attribute, see
+ *	&enum nl80211_ap_sme_features.
  *
  * @NL80211_ATTR_MAX: highest attribute number currently defined
  * @__NL80211_ATTR_AFTER_LAST: internal use
@@ -1231,10 +1340,13 @@ enum nl80211_attrs {
 	NL80211_ATTR_WIPHY_ANTENNA_AVAIL_TX,
 	NL80211_ATTR_WIPHY_ANTENNA_AVAIL_RX,
 
+<<<<<<< HEAD
 #ifdef CONFIG_WIFI_KERNEL_3_4_DISABLE
 	NL80211_ATTR_SCAN_FLAGS,
 #endif
 
+=======
+>>>>>>> d804779... 264 to 298 patch
 	NL80211_ATTR_SUPPORT_MESH_AUTH,
 	NL80211_ATTR_STA_PLINK_STATE,
 
@@ -1253,7 +1365,10 @@ enum nl80211_attrs {
 
 	NL80211_ATTR_SCAN_SUPP_RATES,
 
+<<<<<<< HEAD
 #ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE
+=======
+>>>>>>> d804779... 264 to 298 patch
 	NL80211_ATTR_HIDDEN_SSID,
 
 	NL80211_ATTR_IE_PROBE_RESP,
@@ -1279,6 +1394,7 @@ enum nl80211_attrs {
 
 	NL80211_ATTR_DEVICE_AP_SME,
 
+<<<<<<< HEAD
 	NL80211_ATTR_DONT_WAIT_FOR_ACK,
 
 	NL80211_ATTR_FEATURE_FLAGS,
@@ -1300,6 +1416,8 @@ enum nl80211_attrs {
 
 	NL80211_ATTR_BG_SCAN_PERIOD,
 #endif
+=======
+>>>>>>> d804779... 264 to 298 patch
 	/* add attributes here, update the policy in nl80211.c */
 
 	__NL80211_ATTR_AFTER_LAST,
@@ -1790,6 +1908,26 @@ enum nl80211_sched_scan_match_attr {
 		__NL80211_SCHED_SCAN_MATCH_ATTR_AFTER_LAST - 1
 };
 #endif
+
+/**
+ * enum nl80211_sched_scan_match_attr - scheduled scan match attributes
+ * @__NL80211_SCHED_SCAN_MATCH_ATTR_INVALID: attribute number 0 is reserved
+ * @NL80211_SCHED_SCAN_MATCH_ATTR_SSID: SSID to be used for matching,
+ * only report BSS with matching SSID.
+ * @NL80211_SCHED_SCAN_MATCH_ATTR_MAX: highest scheduled scan filter
+ *	attribute number currently defined
+ * @__NL80211_SCHED_SCAN_MATCH_ATTR_AFTER_LAST: internal use
+ */
+enum nl80211_sched_scan_match_attr {
+	__NL80211_SCHED_SCAN_MATCH_ATTR_INVALID,
+
+	NL80211_ATTR_SCHED_SCAN_MATCH_SSID,
+
+	/* keep last */
+	__NL80211_SCHED_SCAN_MATCH_ATTR_AFTER_LAST,
+	NL80211_SCHED_SCAN_MATCH_ATTR_MAX =
+		__NL80211_SCHED_SCAN_MATCH_ATTR_AFTER_LAST - 1
+};
 
 /**
  * enum nl80211_reg_rule_flags - regulatory rule flags
@@ -2342,18 +2480,6 @@ enum nl80211_tx_power_setting {
 };
 
 /**
- * enum nl80211_scan_flags -  scan request control flags
- *
- * Scan request control flags are used to control the handling
- * of NL80211_CMD_TRIGGER_SCAN, requests.
- *
- * @NL80211_SCAN_FLAG_TX_ABORT: abort scan if tx collides
- */
-enum nl80211_scan_flags {
-	NL80211_SCAN_FLAG_TX_ABORT	= 1<<0,
-};
-
-/**
  * enum nl80211_wowlan_packet_pattern_attr - WoWLAN packet pattern attribute
  * @__NL80211_WOWLAN_PKTPAT_INVALID: invalid number for nested attribute
  * @NL80211_WOWLAN_PKTPAT_PATTERN: the pattern, values where the mask has
@@ -2577,7 +2703,10 @@ enum nl80211_rekey_data {
 	MAX_NL80211_REKEY_DATA = NUM_NL80211_REKEY_DATA - 1
 };
 
+<<<<<<< HEAD
 #ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE
+=======
+>>>>>>> d804779... 264 to 298 patch
 /**
  * enum nl80211_hidden_ssid - values for %NL80211_ATTR_HIDDEN_SSID
  * @NL80211_HIDDEN_SSID_NOT_IN_USE: do not hide SSID (i.e., broadcast it in
@@ -2660,6 +2789,7 @@ enum nl80211_ap_sme_features {
 };
  */
 
+<<<<<<< HEAD
 /**
  * enum nl80211_feature_flags - device/driver features
  * @NL80211_FEATURE_SK_TX_STATUS: This driver supports reflecting back
@@ -2697,4 +2827,6 @@ enum nl80211_probe_resp_offload_support_attr {
 };
 #endif
 
+=======
+>>>>>>> d804779... 264 to 298 patch
 #endif /* __LINUX_NL80211_H */

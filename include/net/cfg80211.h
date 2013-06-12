@@ -832,15 +832,6 @@ struct cfg80211_ssid {
 };
 
 /**
- * enum cfg80211_scan_flag -  scan request control flags
- *
- * @CFG80211_SCAN__FLAG_TX_ABORT: abort scan on pending transmit
- */
-enum cfg80211_scan_flags {
-	CFG80211_SCAN_FLAG_TX_ABORT	= NL80211_SCAN_FLAG_TX_ABORT,
-};
-
-/**
  * struct cfg80211_scan_request - scan request description
  *
  * @ssids: SSIDs to scan for (active scan only)
@@ -849,7 +840,6 @@ enum cfg80211_scan_flags {
  * @n_channels: total number of channels to scan
  * @ie: optional information element(s) to add into Probe Request or %NULL
  * @ie_len: length of ie in octets
- * @flags: bit field of flags controlling operation
  * @rates: bitmap of rates to advertise for each band
  * @wiphy: the wiphy this was for
  * @dev: the interface
@@ -861,7 +851,6 @@ struct cfg80211_scan_request {
 	u32 n_channels;
 	const u8 *ie;
 	size_t ie_len;
-	u32 flags;
 
 	u32 rates[IEEE80211_NUM_BANDS];
 
@@ -888,6 +877,15 @@ struct cfg80211_match_set {
 #endif
 
 /**
+ * struct cfg80211_match_set - sets of attributes to match
+ *
+ * @ssid: SSID to be matched
+ */
+struct cfg80211_match_set {
+	struct cfg80211_ssid ssid;
+};
+
+/**
  * struct cfg80211_sched_scan_request - scheduled scan request description
  *
  * @ssids: SSIDs to scan for (passed in the probe_reqs in active scans)
@@ -896,6 +894,11 @@ struct cfg80211_match_set {
  * @interval: interval between each scheduled scan cycle
  * @ie: optional information element(s) to add into Probe Request or %NULL
  * @ie_len: length of ie in octets
+ * @match_sets: sets of parameters to be matched for a scan result
+ *	entry to be considered valid and to be passed to the host
+ *	(others are filtered out).
+ *	If ommited, all results are passed.
+ * @n_match_sets: number of match sets
  * @wiphy: the wiphy this was for
  * @dev: the interface
  * @channels: channels to scan
@@ -907,10 +910,16 @@ struct cfg80211_sched_scan_request {
 	u32 interval;
 	const u8 *ie;
 	size_t ie_len;
+<<<<<<< HEAD
 #ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE	
 	struct cfg80211_match_set *match_sets;
 	int n_match_sets;
 #endif
+=======
+	struct cfg80211_match_set *match_sets;
+	int n_match_sets;
+
+>>>>>>> d804779... 264 to 298 patch
 	/* internal */
 	struct wiphy *wiphy;
 	struct net_device *dev;
@@ -1537,6 +1546,12 @@ struct cfg80211_gtk_rekey_data {
  * @set_ringparam: Set tx and rx ring sizes.
  *
  * @get_ringparam: Get tx and rx ring current and maximum sizes.
+ *
+ * @tdls_mgmt: Transmit a TDLS management frame.
+ * @tdls_oper: Perform a high-level TDLS operation (e.g. TDLS link setup).
+ *
+ * @probe_client: probe an associated client, must return a cookie that it
+ *	later passes to cfg80211_probe_status().
  */
 struct cfg80211_ops {
 	int	(*suspend)(struct wiphy *wiphy, struct cfg80211_wowlan *wow);
@@ -1747,7 +1762,10 @@ struct cfg80211_ops {
 	int	(*set_rekey_data)(struct wiphy *wiphy, struct net_device *dev,
 				  struct cfg80211_gtk_rekey_data *data);
 
+<<<<<<< HEAD
 #ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE
+=======
+>>>>>>> d804779... 264 to 298 patch
 	int	(*tdls_mgmt)(struct wiphy *wiphy, struct net_device *dev,
 			     u8 *peer, u8 action_code,  u8 dialog_token,
 			     u16 status_code, const u8 *buf, size_t len);
@@ -1756,6 +1774,7 @@ struct cfg80211_ops {
 
 	int	(*probe_client)(struct wiphy *wiphy, struct net_device *dev,
 				const u8 *peer, u64 *cookie);
+<<<<<<< HEAD
 
 	int	(*set_noack_map)(struct wiphy *wiphy,
 				  struct net_device *dev,
@@ -1763,6 +1782,8 @@ struct cfg80211_ops {
 
 		struct ieee80211_channel *(*get_channel)(struct wiphy *wiphy);
 #endif		
+=======
+>>>>>>> d804779... 264 to 298 patch
 };
 
 /*
@@ -1812,6 +1833,19 @@ struct cfg80211_ops {
  * @WIPHY_FLAG_MESH_AUTH: The device supports mesh authentication by routing
  *	auth frames to userspace. See @NL80211_MESH_SETUP_USERSPACE_AUTH.
  * @WIPHY_FLAG_SUPPORTS_SCHED_SCAN: The device supports scheduled scans.
+ * @WIPHY_FLAG_SUPPORTS_FW_ROAM: The device supports roaming feature in the
+ *	firmware.
+ * @WIPHY_FLAG_AP_UAPSD: The device supports uapsd on AP.
+ * @WIPHY_FLAG_SUPPORTS_TDLS: The device supports TDLS (802.11z) operation.
+ * @WIPHY_FLAG_TDLS_EXTERNAL_SETUP: The device does not handle TDLS (802.11z)
+ *	link setup/discovery operations internally. Setup, discovery and
+ *	teardown packets should be sent through the @NL80211_CMD_TDLS_MGMT
+ *	command. When this flag is not set, @NL80211_CMD_TDLS_OPER should be
+ *	used for asking the driver/firmware to perform a TDLS operation.
+ * @WIPHY_FLAG_HAVE_AP_SME: device integrates AP SME
+ * @WIPHY_FLAG_REPORTS_OBSS: the device will report beacons from other BSSes
+ *	when there are virtual interfaces in AP mode by calling
+ *	cfg80211_report_obss_beacon().
  */
 enum wiphy_flags {
 	WIPHY_FLAG_CUSTOM_REGULATORY		= BIT(0),
@@ -1826,17 +1860,23 @@ enum wiphy_flags {
 	WIPHY_FLAG_MESH_AUTH			= BIT(10),
 	WIPHY_FLAG_SUPPORTS_SCHED_SCAN		= BIT(11),
 	WIPHY_FLAG_ENFORCE_COMBINATIONS		= BIT(12),
+<<<<<<< HEAD
 #ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE
+=======
+>>>>>>> d804779... 264 to 298 patch
 	WIPHY_FLAG_SUPPORTS_FW_ROAM		= BIT(13),
 	WIPHY_FLAG_AP_UAPSD			= BIT(14),
 	WIPHY_FLAG_SUPPORTS_TDLS		= BIT(15),
 	WIPHY_FLAG_TDLS_EXTERNAL_SETUP		= BIT(16),
 	WIPHY_FLAG_HAVE_AP_SME			= BIT(17),
 	WIPHY_FLAG_REPORTS_OBSS			= BIT(18),
+<<<<<<< HEAD
 	WIPHY_FLAG_AP_PROBE_RESP_OFFLOAD	= BIT(19),
 	WIPHY_FLAG_OFFCHAN_TX			= BIT(20),
 	WIPHY_FLAG_HAS_REMAIN_ON_CHANNEL	= BIT(21),
 #endif	
+=======
+>>>>>>> d804779... 264 to 298 patch
 };
 
 /**
@@ -2014,6 +2054,9 @@ struct wiphy_wowlan_support {
  *	any given scan
  * @max_sched_scan_ssids: maximum number of SSIDs the device can scan
  *	for in any given scheduled scan
+ * @max_match_sets: maximum number of match sets the device can handle
+ *	when performing a scheduled scan, 0 if filtering is not
+ *	supported.
  * @max_scan_ie_len: maximum length of user-controlled IEs device can
  *	add to probe request frames transmitted during a scan, must not
  *	include fixed IEs like supported rates
@@ -2043,6 +2086,8 @@ struct wiphy_wowlan_support {
  *	may request, if implemented.
  *
  * @wowlan: WoWLAN support information
+ *
+ * @ap_sme_capa: AP SME capabilities, flags from &enum nl80211_ap_sme_features.
  */
 struct wiphy {
 	/* assign these fields before you register the wiphy */
@@ -2068,15 +2113,25 @@ struct wiphy {
 	u32 ap_sme_capa;
 #else
 	u32 flags;
+<<<<<<< HEAD
 #endif
+=======
+
+	u32 ap_sme_capa;
+
+>>>>>>> d804779... 264 to 298 patch
 	enum cfg80211_signal_type signal_type;
 
 	int bss_priv_size;
 	u8 max_scan_ssids;
 	u8 max_sched_scan_ssids;
+<<<<<<< HEAD
 #ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE
 	u8 max_match_sets;
 #endif
+=======
+	u8 max_match_sets;
+>>>>>>> d804779... 264 to 298 patch
 	u16 max_scan_ie_len;
 	u16 max_sched_scan_ie_len;
 
@@ -2338,6 +2393,8 @@ struct wireless_dev {
 #ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE
 	u32 ap_unexpected_nlpid;
 #endif
+
+	u32 ap_unexpected_nlpid;
 
 #ifdef CONFIG_CFG80211_WEXT
 	/* wext data */
@@ -3430,7 +3487,10 @@ void cfg80211_cqm_pktloss_notify(struct net_device *dev,
 void cfg80211_gtk_rekey_notify(struct net_device *dev, const u8 *bssid,
 			       const u8 *replay_ctr, gfp_t gfp);
 
+<<<<<<< HEAD
 #ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE
+=======
+>>>>>>> d804779... 264 to 298 patch
 /**
  * cfg80211_pmksa_candidate_notify - notify about PMKSA caching candidate
  * @dev: network device
@@ -3458,6 +3518,7 @@ bool cfg80211_rx_spurious_frame(struct net_device *dev,
 				const u8 *addr, gfp_t gfp);
 
 /**
+<<<<<<< HEAD
  * cfg80211_rx_unexpected_4addr_frame - inform about unexpected WDS frame
  * @dev: The device the frame matched to
  * @addr: the transmitter address
@@ -3474,6 +3535,8 @@ bool cfg80211_rx_unexpected_4addr_frame(struct net_device *dev,
 					const u8 *addr, gfp_t gfp);
 
 /**
+=======
+>>>>>>> d804779... 264 to 298 patch
  * cfg80211_probe_status - notify userspace about probe status
  * @dev: the device the probe was sent on
  * @addr: the address of the peer
@@ -3490,7 +3553,10 @@ void cfg80211_probe_status(struct net_device *dev, const u8 *addr,
  * @frame: the frame
  * @len: length of the frame
  * @freq: frequency the frame was received on
+<<<<<<< HEAD
  * @sig_dbm: signal strength in mBm, or 0 if unknown
+=======
+>>>>>>> d804779... 264 to 298 patch
  * @gfp: allocation flags
  *
  * Use this function to report to userspace when a beacon was
@@ -3499,6 +3565,7 @@ void cfg80211_probe_status(struct net_device *dev, const u8 *addr,
  */
 void cfg80211_report_obss_beacon(struct wiphy *wiphy,
 				 const u8 *frame, size_t len,
+<<<<<<< HEAD
 				 int freq, int sig_dbm, gfp_t gfp);
 
 /*
@@ -3519,6 +3586,9 @@ int cfg80211_can_beacon_sec_chan(struct wiphy *wiphy,
  */
 u16 cfg80211_calculate_bitrate(struct rate_info *rate);
 #endif
+=======
+				 int freq, gfp_t gfp);
+>>>>>>> d804779... 264 to 298 patch
 
 /* Logging, debugging and troubleshooting/diagnostic helpers. */
 

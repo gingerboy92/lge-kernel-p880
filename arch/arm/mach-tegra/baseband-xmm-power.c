@@ -37,6 +37,11 @@
 #include <linux/reboot.h>
 
 #include <mach/usb_phy.h>
+<<<<<<< HEAD
+=======
+#include <linux/regulator/consumer.h>
+#include <linux/irq.h>
+>>>>>>> d804779... 264 to 298 patch
 #include "board.h"
 #include "devices.h"
 #include "gpio-names.h"
@@ -1459,9 +1464,16 @@ static int baseband_xmm_power_driver_suspend(struct device *dev)
 
 static int baseband_xmm_power_driver_resume(struct device *dev)
 {
+<<<<<<< HEAD
      struct platform_device *pdev = to_platform_device(dev);
      struct baseband_power_platform_data *data
                 = (struct baseband_power_platform_data *)pdev->dev.platform_data;
+=======
+	unsigned long flags;
+	struct platform_device *pdev = to_platform_device(dev);
+	struct baseband_power_platform_data *data
+		= pdev->dev.platform_data;
+>>>>>>> d804779... 264 to 298 patch
 
      pr_debug("%s\n", __func__);
      baseband_xmm_power_driver_handle_resume(data);
@@ -1482,18 +1494,36 @@ static int baseband_xmm_power_suspend_noirq(struct device *dev)
 		pr_info("%s:**Abort Suspend: reason CP WAKEUP**\n", __func__);
 		pr_info("%s:**spin unlock **\n", __func__);
 		return -EBUSY;
+<<<<<<< HEAD
     }
     spin_unlock_irqrestore(&xmm_lock, flags);
     return 0;
+=======
+	}
+	spin_unlock_irqrestore(&xmm_lock, flags);
+	irq_set_irq_type(gpio_to_irq(data->modem.xmm.ipc_ap_wake)
+			, IRQF_TRIGGER_FALLING);
+	return 0;
+>>>>>>> d804779... 264 to 298 patch
 }
 
 static int baseband_xmm_power_resume_noirq(struct device *dev)
 {
+<<<<<<< HEAD
 	int value;
 	value = gpio_get_value(baseband_power_driver_data->modem.xmm.ipc_ap_wake);
 	//pr_debug("%s host_wake(%d)\n", __func__, value);
 	pr_debug("%s GPIO [R]: Host_wakeup = %d \n",__func__,value); 
     return 0;
+=======
+	struct platform_device *pdev = to_platform_device(dev);
+	struct baseband_power_platform_data *data
+		= pdev->dev.platform_data;
+	pr_debug("%s\n", __func__);
+	irq_set_irq_type(gpio_to_irq(data->modem.xmm.ipc_ap_wake)
+			, IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING);
+	return 0;
+>>>>>>> d804779... 264 to 298 patch
 }
 
 static const struct dev_pm_ops baseband_xmm_power_dev_pm_ops = {

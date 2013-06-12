@@ -79,4 +79,8 @@ obj-y				+= cpwatcher.o
 #LGE_IMC_RIL
 obj-y   += mtc_eta/
 obj-$(CONFIG_TEGRA_THROUGHPUT)	+= tegra-throughput.o
+<<<<<<< HEAD
 
+=======
+obj-$(CONFIG_BLUEDROID_PM)      += bluedroid_pm.o
+>>>>>>> d804779... 264 to 298 patch

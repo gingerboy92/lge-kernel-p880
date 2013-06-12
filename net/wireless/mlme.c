@@ -940,6 +940,7 @@ bool cfg80211_rx_spurious_frame(struct net_device *dev,
 	return nl80211_unexpected_frame(dev, addr, gfp);
 }
 EXPORT_SYMBOL(cfg80211_rx_spurious_frame);
+<<<<<<< HEAD
 
 bool cfg80211_rx_unexpected_4addr_frame(struct net_device *dev,
 					const u8 *addr, gfp_t gfp)
@@ -954,3 +955,5 @@ bool cfg80211_rx_unexpected_4addr_frame(struct net_device *dev,
 	return nl80211_unexpected_4addr_frame(dev, addr, gfp);
 }
 EXPORT_SYMBOL(cfg80211_rx_unexpected_4addr_frame);
+=======
+>>>>>>> d804779... 264 to 298 patch

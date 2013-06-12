@@ -1072,6 +1072,42 @@ static int __devexit tegra_i2c_remove(struct platform_device *pdev)
 	return 0;
 }
 
+<<<<<<< HEAD
+=======
+#if defined(CONFIG_HAS_EARLYSUSPEND)
+static void tegra_i2c_early_suspend(struct early_suspend *es)
+{
+	struct tegra_i2c_dev *i2c_dev;
+	i2c_dev = container_of(es, struct tegra_i2c_dev, early_suspend);
+
+	rt_mutex_lock(&i2c_dev->dev_lock);
+
+	tegra_i2c_clock_disable(i2c_dev);
+
+	rt_mutex_unlock(&i2c_dev->dev_lock);
+}
+
+static void tegra_i2c_early_resume(struct early_suspend *es)
+{
+	struct tegra_i2c_dev *i2c_dev;
+	int ret;
+
+	i2c_dev = container_of(es, struct tegra_i2c_dev, early_suspend);
+
+	rt_mutex_lock(&i2c_dev->dev_lock);
+
+	tegra_i2c_clock_enable(i2c_dev);
+
+	ret = tegra_i2c_init(i2c_dev);
+	if (ret) {
+		rt_mutex_unlock(&i2c_dev->dev_lock);
+		return;
+	}
+
+	rt_mutex_unlock(&i2c_dev->dev_lock);
+}
+#endif
+>>>>>>> d804779... 264 to 298 patch
 
 #ifdef CONFIG_PM_SLEEP
 static int tegra_i2c_suspend_noirq(struct device *dev)

@@ -518,6 +518,66 @@ static void ieee80211_scan_state_decision(struct ieee80211_local *local,
 
 	next_chan = local->scan_req->channels[local->scan_channel_idx];
 
+<<<<<<< HEAD
+=======
+	if (ieee80211_cfg_on_oper_channel(local)) {
+		/* We're currently on operating channel. */
+		if (next_chan == local->oper_channel)
+			/* We don't need to move off of operating channel. */
+			local->next_scan_state = SCAN_SET_CHANNEL;
+		else
+			/*
+			 * We do need to leave operating channel, as next
+			 * scan is somewhere else.
+			 */
+			local->next_scan_state = SCAN_LEAVE_OPER_CHANNEL;
+	} else {
+		/*
+		 * we're currently scanning a different channel, let's
+		 * see if we can scan another channel without interfering
+		 * with the current traffic situation.
+		 *
+		 * Since we don't know if the AP has pending frames for us
+		 * we can only check for our tx queues and use the current
+		 * pm_qos requirements for rx. Hence, if no tx traffic occurs
+		 * at all we will scan as many channels in a row as the pm_qos
+		 * latency allows us to. Additionally we also check for the
+		 * currently negotiated listen interval to prevent losing
+		 * frames unnecessarily.
+		 *
+		 * Otherwise switch back to the operating channel.
+		 */
+
+		bad_latency = time_after(jiffies +
+				ieee80211_scan_get_channel_time(next_chan),
+				local->leave_oper_channel_time +
+				usecs_to_jiffies(pm_qos_request(PM_QOS_NETWORK_LATENCY)));
+
+		listen_int_exceeded = time_after(jiffies +
+				ieee80211_scan_get_channel_time(next_chan),
+				local->leave_oper_channel_time +
+				usecs_to_jiffies(min_beacon_int * 1024) *
+				local->hw.conf.listen_interval);
+
+		if (associated && ( !tx_empty || bad_latency ||
+		    listen_int_exceeded))
+			local->next_scan_state = SCAN_ENTER_OPER_CHANNEL;
+		else
+			local->next_scan_state = SCAN_SET_CHANNEL;
+	}
+
+	*next_delay = 0;
+}
+
+static void ieee80211_scan_state_leave_oper_channel(struct ieee80211_local *local,
+						    unsigned long *next_delay)
+{
+	/* PS will already be in off-channel mode,
+	 * we do that once at the beginning of scanning.
+	 */
+	ieee80211_offchannel_stop_vifs(local, false);
+
+>>>>>>> d804779... 264 to 298 patch
 	/*
 	 * we're currently scanning a different channel, let's
 	 * see if we can scan another channel without interfering
@@ -550,7 +610,12 @@ static void ieee80211_scan_state_decision(struct ieee80211_local *local,
 	else
 		local->next_scan_state = SCAN_SET_CHANNEL;
 
+<<<<<<< HEAD
 	*next_delay = 0;
+=======
+	*next_delay = HZ / 5;
+	local->next_scan_state = SCAN_DECISION;
+>>>>>>> d804779... 264 to 298 patch
 }
 
 static void ieee80211_scan_state_set_channel(struct ieee80211_local *local,
@@ -730,8 +795,13 @@ void ieee80211_scan_work(struct work_struct *work)
 		case SCAN_SEND_PROBE:
 			ieee80211_scan_state_send_probe(local, &next_delay);
 			break;
+<<<<<<< HEAD
 		case SCAN_SUSPEND:
 			ieee80211_scan_state_suspend(local, &next_delay);
+=======
+		case SCAN_LEAVE_OPER_CHANNEL:
+			ieee80211_scan_state_leave_oper_channel(local, &next_delay);
+>>>>>>> d804779... 264 to 298 patch
 			break;
 		case SCAN_RESUME:
 			ieee80211_scan_state_resume(local, &next_delay);

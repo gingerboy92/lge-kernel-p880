@@ -805,16 +805,28 @@ enum {
  *	operating channel
  * @SCAN_SET_CHANNEL: Set the next channel to be scanned
  * @SCAN_SEND_PROBE: Send probe requests and wait for probe responses
+<<<<<<< HEAD
  * @SCAN_SUSPEND: Suspend the scan and go back to operating channel to
  *	send out data
  * @SCAN_RESUME: Resume the scan and scan the next channel
+=======
+ * @SCAN_LEAVE_OPER_CHANNEL: Leave the operating channel, notify the AP
+ *	about us leaving the channel and stop all associated STA interfaces
+ * @SCAN_ENTER_OPER_CHANNEL: Enter the operating channel again, notify the
+ *	AP about us being back and restart all associated STA interfaces
+>>>>>>> d804779... 264 to 298 patch
  */
 enum mac80211_scan_state {
 	SCAN_DECISION,
 	SCAN_SET_CHANNEL,
 	SCAN_SEND_PROBE,
+<<<<<<< HEAD
 	SCAN_SUSPEND,
 	SCAN_RESUME,
+=======
+	SCAN_LEAVE_OPER_CHANNEL,
+	SCAN_ENTER_OPER_CHANNEL,
+>>>>>>> d804779... 264 to 298 patch
 };
 
 struct ieee80211_local {

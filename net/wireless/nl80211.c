@@ -184,9 +184,15 @@ static const struct nla_policy nl80211_policy[NL80211_ATTR_MAX+1] = {
 	[NL80211_ATTR_SCAN_SUPP_RATES] = { .type = NLA_NESTED },
 	[NL80211_ATTR_HIDDEN_SSID] = { .type = NLA_U32 },
 	[NL80211_ATTR_IE_PROBE_RESP] = { .type = NLA_BINARY,
+<<<<<<< HEAD
 					 .len = IEEE80211_MAX_DATA_LEN },
 	[NL80211_ATTR_IE_ASSOC_RESP] = { .type = NLA_BINARY,
 					 .len = IEEE80211_MAX_DATA_LEN },
+=======
+			 .len = IEEE80211_MAX_DATA_LEN },
+	[NL80211_ATTR_IE_ASSOC_RESP] = { .type = NLA_BINARY,
+			 .len = IEEE80211_MAX_DATA_LEN },
+>>>>>>> d804779... 264 to 298 patch
 	[NL80211_ATTR_ROAM_SUPPORT] = { .type = NLA_FLAG },
 	[NL80211_ATTR_SCHED_SCAN_MATCH] = { .type = NLA_NESTED },
 	[NL80211_ATTR_TX_NO_CCK_RATE] = { .type = NLA_FLAG },
@@ -195,6 +201,7 @@ static const struct nla_policy nl80211_policy[NL80211_ATTR_MAX+1] = {
 	[NL80211_ATTR_TDLS_OPERATION] = { .type = NLA_U8 },
 	[NL80211_ATTR_TDLS_SUPPORT] = { .type = NLA_FLAG },
 	[NL80211_ATTR_TDLS_EXTERNAL_SETUP] = { .type = NLA_FLAG },
+<<<<<<< HEAD
 	[NL80211_ATTR_DONT_WAIT_FOR_ACK] = { .type = NLA_FLAG },
 	[NL80211_ATTR_PROBE_RESP] = { .type = NLA_BINARY,
 				      .len = IEEE80211_MAX_DATA_LEN },
@@ -206,6 +213,8 @@ static const struct nla_policy nl80211_policy[NL80211_ATTR_MAX+1] = {
 	[NL80211_ATTR_NOACK_MAP] = { .type = NLA_U16 },
 	[NL80211_ATTR_INACTIVITY_TIMEOUT] = { .type = NLA_U16 },
 	[NL80211_ATTR_BG_SCAN_PERIOD] = { .type = NLA_U16 },
+=======
+>>>>>>> d804779... 264 to 298 patch
 };
 
 /* policy for the key attributes */
@@ -238,6 +247,12 @@ nl80211_wowlan_policy[NUM_NL80211_WOWLAN_TRIG] = {
 	[NL80211_WOWLAN_TRIG_EAP_IDENT_REQUEST] = { .type = NLA_FLAG },
 	[NL80211_WOWLAN_TRIG_4WAY_HANDSHAKE] = { .type = NLA_FLAG },
 	[NL80211_WOWLAN_TRIG_RFKILL_RELEASE] = { .type = NLA_FLAG },
+};
+
+static const struct nla_policy
+nl80211_match_policy[NL80211_SCHED_SCAN_MATCH_ATTR_MAX + 1] = {
+	[NL80211_ATTR_SCHED_SCAN_MATCH_SSID] = { .type = NLA_BINARY,
+			     .len = IEEE80211_MAX_SSID_LEN },
 };
 
 /* policy for GTK rekey offload attributes */
@@ -737,7 +752,11 @@ static int nl80211_send_wiphy(struct sk_buff *msg, u32 pid, u32 seq, int flags,
 	NLA_PUT_U16(msg, NL80211_ATTR_MAX_SCHED_SCAN_IE_LEN,
 		    dev->wiphy.max_sched_scan_ie_len);
 	NLA_PUT_U8(msg, NL80211_ATTR_MAX_MATCH_SETS,
+<<<<<<< HEAD
 		   dev->wiphy.max_match_sets);
+=======
+		    dev->wiphy.max_match_sets);
+>>>>>>> d804779... 264 to 298 patch
 
 	if (dev->wiphy.flags & WIPHY_FLAG_IBSS_RSN)
 		NLA_PUT_FLAG(msg, NL80211_ATTR_SUPPORT_IBSS_RSN);
@@ -905,15 +924,21 @@ static int nl80211_send_wiphy(struct sk_buff *msg, u32 pid, u32 seq, int flags,
 	if (dev->wiphy.flags & WIPHY_FLAG_SUPPORTS_SCHED_SCAN)
 		CMD(sched_scan_start, START_SCHED_SCAN);
 	CMD(probe_client, PROBE_CLIENT);
+<<<<<<< HEAD
 	CMD(set_noack_map, SET_NOACK_MAP);
+=======
+>>>>>>> d804779... 264 to 298 patch
 	if (dev->wiphy.flags & WIPHY_FLAG_REPORTS_OBSS) {
 		i++;
 		NLA_PUT_U32(msg, i, NL80211_CMD_REGISTER_BEACONS);
 	}
+<<<<<<< HEAD
 
 #ifdef CONFIG_NL80211_TESTMODE
 	CMD(testmode_cmd, TESTMODE);
 #endif
+=======
+>>>>>>> d804779... 264 to 298 patch
 
 #undef CMD
 
@@ -1036,6 +1061,7 @@ static int nl80211_send_wiphy(struct sk_buff *msg, u32 pid, u32 seq, int flags,
 		NLA_PUT_U32(msg, NL80211_ATTR_DEVICE_AP_SME,
 			    dev->wiphy.ap_sme_capa);
 
+<<<<<<< HEAD
 	NLA_PUT_U32(msg, NL80211_ATTR_FEATURE_FLAGS, dev->wiphy.features);
 
 	if (dev->wiphy.ht_capa_mod_mask)
@@ -1043,6 +1069,8 @@ static int nl80211_send_wiphy(struct sk_buff *msg, u32 pid, u32 seq, int flags,
 			sizeof(*dev->wiphy.ht_capa_mod_mask),
 			dev->wiphy.ht_capa_mod_mask);
 
+=======
+>>>>>>> d804779... 264 to 298 patch
 	return genlmsg_end(msg, hdr);
 
  nla_put_failure:
@@ -3846,6 +3874,7 @@ static int nl80211_trigger_scan(struct sk_buff *skb, struct genl_info *info)
 		       nla_data(info->attrs[NL80211_ATTR_IE]),
 		       request->ie_len);
 	}
+<<<<<<< HEAD
 	for (i = 0; i < IEEE80211_NUM_BANDS; i++)
 		if (wiphy->bands[i])
 			request->rates[i] =
@@ -3867,6 +3896,8 @@ static int nl80211_trigger_scan(struct sk_buff *skb, struct genl_info *info)
 				goto out_free;
 		}
 	}
+=======
+>>>>>>> d804779... 264 to 298 patch
 
 	for (i = 0; i < IEEE80211_NUM_BANDS; i++)
 		if (wiphy->bands[i])
@@ -6869,7 +6900,11 @@ static struct genl_ops nl80211_ops[] = {
 		.doit = nl80211_probe_client,
 		.policy = nl80211_policy,
 		.flags = GENL_ADMIN_PERM,
+<<<<<<< HEAD
 		.internal_flags = NL80211_FLAG_NEED_NETDEV_UP |
+=======
+		.internal_flags = NL80211_FLAG_NEED_NETDEV |
+>>>>>>> d804779... 264 to 298 patch
 				  NL80211_FLAG_NEED_RTNL,
 	},
 	{
@@ -6880,6 +6915,7 @@ static struct genl_ops nl80211_ops[] = {
 		.internal_flags = NL80211_FLAG_NEED_WIPHY |
 				  NL80211_FLAG_NEED_RTNL,
 	},
+<<<<<<< HEAD
 	{
 		.cmd = NL80211_CMD_SET_NOACK_MAP,
 		.doit = nl80211_set_noack_map,
@@ -6889,6 +6925,8 @@ static struct genl_ops nl80211_ops[] = {
 				  NL80211_FLAG_NEED_RTNL,
 	},
 
+=======
+>>>>>>> d804779... 264 to 298 patch
 };
 
 static struct genl_multicast_group nl80211_mlme_mcgrp = {
@@ -7674,8 +7712,12 @@ void nl80211_send_sta_del_event(struct cfg80211_registered_device *rdev,
 	nlmsg_free(msg);
 }
 
+<<<<<<< HEAD
 static bool __nl80211_unexpected_frame(struct net_device *dev, u8 cmd,
 				       const u8 *addr, gfp_t gfp)
+=======
+bool nl80211_unexpected_frame(struct net_device *dev, const u8 *addr, gfp_t gfp)
+>>>>>>> d804779... 264 to 298 patch
 {
 	struct wireless_dev *wdev = dev->ieee80211_ptr;
 	struct cfg80211_registered_device *rdev = wiphy_to_dev(wdev->wiphy);
@@ -7691,7 +7733,11 @@ static bool __nl80211_unexpected_frame(struct net_device *dev, u8 cmd,
 	if (!msg)
 		return true;
 
+<<<<<<< HEAD
 	hdr = nl80211hdr_put(msg, 0, 0, 0, cmd);
+=======
+	hdr = nl80211hdr_put(msg, 0, 0, 0, NL80211_CMD_UNEXPECTED_FRAME);
+>>>>>>> d804779... 264 to 298 patch
 	if (!hdr) {
 		nlmsg_free(msg);
 		return true;
@@ -7716,6 +7762,7 @@ static bool __nl80211_unexpected_frame(struct net_device *dev, u8 cmd,
 	return true;
 }
 
+<<<<<<< HEAD
 bool nl80211_unexpected_frame(struct net_device *dev, const u8 *addr, gfp_t gfp)
 {
 	return __nl80211_unexpected_frame(dev, NL80211_CMD_UNEXPECTED_FRAME,
@@ -7730,6 +7777,8 @@ bool nl80211_unexpected_4addr_frame(struct net_device *dev,
 					  addr, gfp);
 }
 
+=======
+>>>>>>> d804779... 264 to 298 patch
 int nl80211_send_mgmt(struct cfg80211_registered_device *rdev,
 		      struct net_device *netdev, u32 nlpid,
 		      int freq, int sig_dbm,
@@ -7928,6 +7977,52 @@ void nl80211_pmksa_candidate_notify(struct cfg80211_registered_device *rdev,
 	nlmsg_free(msg);
 }
 
+void nl80211_pmksa_candidate_notify(struct cfg80211_registered_device *rdev,
+				    struct net_device *netdev, int index,
+				    const u8 *bssid, bool preauth, gfp_t gfp)
+{
+	struct sk_buff *msg;
+	struct nlattr *attr;
+	void *hdr;
+
+	msg = nlmsg_new(NLMSG_GOODSIZE, gfp);
+	if (!msg)
+		return;
+
+	hdr = nl80211hdr_put(msg, 0, 0, 0, NL80211_CMD_PMKSA_CANDIDATE);
+	if (!hdr) {
+		nlmsg_free(msg);
+		return;
+	}
+
+	NLA_PUT_U32(msg, NL80211_ATTR_WIPHY, rdev->wiphy_idx);
+	NLA_PUT_U32(msg, NL80211_ATTR_IFINDEX, netdev->ifindex);
+
+	attr = nla_nest_start(msg, NL80211_ATTR_PMKSA_CANDIDATE);
+	if (!attr)
+		goto nla_put_failure;
+
+	NLA_PUT_U32(msg, NL80211_PMKSA_CANDIDATE_INDEX, index);
+	NLA_PUT(msg, NL80211_PMKSA_CANDIDATE_BSSID, ETH_ALEN, bssid);
+	if (preauth)
+		NLA_PUT_FLAG(msg, NL80211_PMKSA_CANDIDATE_PREAUTH);
+
+	nla_nest_end(msg, attr);
+
+	if (genlmsg_end(msg, hdr) < 0) {
+		nlmsg_free(msg);
+		return;
+	}
+
+	genlmsg_multicast_netns(wiphy_net(&rdev->wiphy), msg, 0,
+				nl80211_mlme_mcgrp.id, gfp);
+	return;
+
+ nla_put_failure:
+	genlmsg_cancel(msg, hdr);
+	nlmsg_free(msg);
+}
+
 void
 nl80211_send_cqm_pktloss_notify(struct cfg80211_registered_device *rdev,
 				struct net_device *netdev, const u8 *peer,
@@ -8039,6 +8134,86 @@ void cfg80211_report_obss_beacon(struct wiphy *wiphy,
 		NLA_PUT_U32(msg, NL80211_ATTR_WIPHY_FREQ, freq);
 	if (sig_dbm)
 		NLA_PUT_U32(msg, NL80211_ATTR_RX_SIGNAL_DBM, sig_dbm);
+	NLA_PUT(msg, NL80211_ATTR_FRAME, len, frame);
+
+	genlmsg_end(msg, hdr);
+
+	genlmsg_unicast(wiphy_net(&rdev->wiphy), msg, nlpid);
+	return;
+
+ nla_put_failure:
+	genlmsg_cancel(msg, hdr);
+	nlmsg_free(msg);
+}
+EXPORT_SYMBOL(cfg80211_report_obss_beacon);
+
+void cfg80211_probe_status(struct net_device *dev, const u8 *addr,
+			   u64 cookie, bool acked, gfp_t gfp)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_dev(wdev->wiphy);
+	struct sk_buff *msg;
+	void *hdr;
+	int err;
+
+	msg = nlmsg_new(NLMSG_GOODSIZE, gfp);
+	if (!msg)
+		return;
+
+	hdr = nl80211hdr_put(msg, 0, 0, 0, NL80211_CMD_PROBE_CLIENT);
+	if (!hdr) {
+		nlmsg_free(msg);
+		return;
+	}
+
+	NLA_PUT_U32(msg, NL80211_ATTR_WIPHY, rdev->wiphy_idx);
+	NLA_PUT_U32(msg, NL80211_ATTR_IFINDEX, dev->ifindex);
+	NLA_PUT(msg, NL80211_ATTR_MAC, ETH_ALEN, addr);
+	NLA_PUT_U64(msg, NL80211_ATTR_COOKIE, cookie);
+	if (acked)
+		NLA_PUT_FLAG(msg, NL80211_ATTR_ACK);
+
+	err = genlmsg_end(msg, hdr);
+	if (err < 0) {
+		nlmsg_free(msg);
+		return;
+	}
+
+	genlmsg_multicast_netns(wiphy_net(&rdev->wiphy), msg, 0,
+				nl80211_mlme_mcgrp.id, gfp);
+	return;
+
+ nla_put_failure:
+	genlmsg_cancel(msg, hdr);
+	nlmsg_free(msg);
+}
+EXPORT_SYMBOL(cfg80211_probe_status);
+
+void cfg80211_report_obss_beacon(struct wiphy *wiphy,
+				 const u8 *frame, size_t len,
+				 int freq, gfp_t gfp)
+{
+	struct cfg80211_registered_device *rdev = wiphy_to_dev(wiphy);
+	struct sk_buff *msg;
+	void *hdr;
+	u32 nlpid = ACCESS_ONCE(rdev->ap_beacons_nlpid);
+
+	if (!nlpid)
+		return;
+
+	msg = nlmsg_new(len + 100, gfp);
+	if (!msg)
+		return;
+
+	hdr = nl80211hdr_put(msg, 0, 0, 0, NL80211_CMD_FRAME);
+	if (!hdr) {
+		nlmsg_free(msg);
+		return;
+	}
+
+	NLA_PUT_U32(msg, NL80211_ATTR_WIPHY, rdev->wiphy_idx);
+	if (freq)
+		NLA_PUT_U32(msg, NL80211_ATTR_WIPHY_FREQ, freq);
 	NLA_PUT(msg, NL80211_ATTR_FRAME, len, frame);
 
 	genlmsg_end(msg, hdr);
