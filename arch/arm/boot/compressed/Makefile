@@ -32,6 +32,10 @@ OBJS   += misc.o decompress.o
 
 FONTC	= $(srctree)/drivers/video/console/font_acorn_8x8.c
 
+# string library code (-Os is enforced to keep it much smaller)
+OBJS    += string.o
+CFLAGS_string.o  := -Os 
+
 #
 # Architecture dependencies
 #
@@ -114,17 +118,17 @@ endif
 
 targets := vmlinux vmlinux.lds \
 		 piggy.$(suffix_y) piggy.$(suffix_y).o \
-		 font.o font.c head.o misc.o $(OBJS)
+		 lib1funcs.o lib1funcs.S font.o font.c head.o misc.o $(OBJS)
 
 # Make sure files are removed during clean
-extra-y       += piggy.gzip piggy.lzo piggy.lzma lib1funcs.S
+extra-y       += piggy.gzip piggy.lzo piggy.lzma lib1funcs.S $(libfdt) $(libfdt_hdrs)
 
 ifeq ($(CONFIG_FUNCTION_TRACER),y)
 ORIG_CFLAGS := $(KBUILD_CFLAGS)
 KBUILD_CFLAGS = $(subst -pg, , $(ORIG_CFLAGS))
 endif
 
-ccflags-y := -fpic -fno-builtin
+ccflags-y := -fpic -fno-builtin -I$(obj)
 asflags-y := -Wa,-march=all
 
 # Supply ZRELADDR to the decompressor via a linker symbol.
