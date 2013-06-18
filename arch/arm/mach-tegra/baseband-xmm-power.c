@@ -712,25 +712,6 @@ static void baseband_xmm_power_init2_work(struct work_struct *work)
 		else
 			pr_err("%s: hsic_register is missing\n", __func__);		
 		register_hsic_device = false;
-<<<<<<< HEAD
-=======
-		modem_reset_flag = 0;
-	}
-
-}
-
-static void baseband_xmm_power_autopm_resume(struct work_struct *work)
-{
-	struct usb_interface *intf;
-
-	pr_debug("%s\n", __func__);
-	if (usbdev) {
-		usb_lock_device(usbdev);
-		intf = usb_ifnum_to_if(usbdev, 0);
-		usb_autopm_get_interface(intf);
-		usb_autopm_put_interface(intf);
-		usb_unlock_device(usbdev);
->>>>>>> aeede2a... tegra: baseband: fix wrong value assignment.
 	}
 }
 
