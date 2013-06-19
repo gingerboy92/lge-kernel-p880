@@ -435,8 +435,11 @@ static int tegra_camera_clk_get(struct platform_device *pdev, const char *name,
 
 //                                                                                          
 //#define POWER_SAVE_REC_CPU_USER_CAP_RATE	640000
-#define POWER_SAVE_BOOST_STEP			1
+//#define POWER_SAVE_BOOST_STEP			1
 #define POWER_SAVE_CPU_FREQ_MIN			640000
+#define POWER_SAVE_CPU_FREQ_MAX			640000
+//#define POWER_SAVE_MIN_CPUS			2
+//#define POWER_SAVE_MAX_CPUS			2
 #define POWER_SAVE_CPU_FREQ_MAX			640000
 #define POWER_SAVE_MIN_CPUS			2
 #define POWER_SAVE_MAX_CPUS			2
@@ -453,7 +456,7 @@ static inline void tegra_camera_do_power_save(struct tegra_camera_dev *dev)
 	rec = dev->power_save_rec;
 
 	if (!dev->power_save && (preview || rec)) {
-		boost_step_default = cpufreq_interactive_get_boost_step();
+//		boost_step_default = cpufreq_interactive_get_boost_step();
 		dev->power_save = true;
 	}
 
@@ -462,7 +465,7 @@ static inline void tegra_camera_do_power_save(struct tegra_camera_dev *dev)
 
 	if (preview && rec) {    
     pr_info("%s : when preview && rec \n", __func__);
-		cpufreq_interactive_set_boost_step(POWER_SAVE_BOOST_STEP);
+//		cpufreq_interactive_set_boost_step(POWER_SAVE_BOOST_STEP);
 //                                                                                          
 		//                                                                      
 		cpufreq_set_max_freq(NULL, POWER_SAVE_CPU_FREQ_MAX);
@@ -476,7 +479,7 @@ static inline void tegra_camera_do_power_save(struct tegra_camera_dev *dev)
 //                                                                                          
 	} else if (preview && !rec) {
 	  pr_info("%s : preview && !rec \n", __func__);
-		cpufreq_interactive_set_boost_step(POWER_SAVE_BOOST_STEP);
+//		cpufreq_interactive_set_boost_step(POWER_SAVE_BOOST_STEP);
 //                                                                                          
 		#if 0 //kwanghee.choi 20120912 Vu1.0 Global fix the frame drop on Camera by setting full CPU clock(start)
 		cpufreq_set_min_freq(NULL, POWER_SAVE_CPU_FREQ_MIN);
@@ -492,7 +495,7 @@ static inline void tegra_camera_do_power_save(struct tegra_camera_dev *dev)
 //                                                                                          
 	} else if (!preview && !rec) {
 	  pr_info("%s : !preview && !rec \n", __func__);
-		cpufreq_interactive_set_boost_step(boost_step_default);
+//		cpufreq_interactive_set_boost_step(boost_step_default);
 //                                                                                          
 		cpufreq_set_min_freq(NULL, PM_QOS_CPU_FREQ_MIN_DEFAULT_VALUE);
 		cpufreq_set_max_freq(NULL, PM_QOS_CPU_FREQ_MAX_DEFAULT_VALUE);
