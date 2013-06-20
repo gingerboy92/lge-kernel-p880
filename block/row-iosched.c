@@ -73,17 +73,17 @@ struct row_queue_params {
 static const struct row_queue_params row_queues_def[] = {
 /* idling_enabled, quantum, is_urgent */
 	{true, 100, true},	/* ROWQ_PRIO_HIGH_READ */
-	{true, 100, true},	/* ROWQ_PRIO_REG_READ */
-	{false, 2, false},	/* ROWQ_PRIO_HIGH_SWRITE */
-	{false, 1, false},	/* ROWQ_PRIO_REG_SWRITE */
-	{false, 1, false},	/* ROWQ_PRIO_REG_WRITE */
-	{false, 1, false},	/* ROWQ_PRIO_LOW_READ */
-	{false, 1, false}	/* ROWQ_PRIO_LOW_SWRITE */
+	{true, 75, true},	/* ROWQ_PRIO_REG_READ */
+	{false, 5, false},	/* ROWQ_PRIO_HIGH_SWRITE */
+	{false, 4, false},	/* ROWQ_PRIO_REG_SWRITE */
+	{false, 4, false},	/* ROWQ_PRIO_REG_WRITE */
+	{false, 3, false},	/* ROWQ_PRIO_LOW_READ */
+	{false, 2, false}	/* ROWQ_PRIO_LOW_SWRITE */
 };
 
 /* Default values for idling on read queues */
-#define ROW_IDLE_TIME_MSEC 5	/* msec */
-#define ROW_READ_FREQ_MSEC 20	/* msec */
+#define ROW_IDLE_TIME_MSEC 10	/* msec */
+#define ROW_READ_FREQ_MSEC 25	/* msec */
 
 /**
  * struct rowq_idling_data -  parameters for idling on the queue
@@ -168,7 +168,7 @@ struct row_data {
 	unsigned int			cycle_flags;
 };
 
-#define RQ_ROWQ(rq) ((struct row_queue *) ((rq)->elv.priv[0]))
+#define RQ_ROWQ(rq) ((struct row_queue *) ((rq)->elevator_private[0]))
 
 #define row_log(q, fmt, args...)   \
 	blk_add_trace_msg(q, "%s():" fmt , __func__, ##args)
@@ -648,7 +648,7 @@ row_set_request(struct request_queue *q, struct request *rq, gfp_t gfp_mask)
 	unsigned long flags;
 
 	spin_lock_irqsave(q->queue_lock, flags);
-	rq->elv.priv[0] =
+	rq->elevator_private[0] =
 		(void *)(&rd->row_queues[get_queue_type(rq)]);
 	spin_unlock_irqrestore(q->queue_lock, flags);
 
