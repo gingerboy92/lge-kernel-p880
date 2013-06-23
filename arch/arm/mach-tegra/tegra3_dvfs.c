@@ -60,9 +60,9 @@ static struct dvfs_rail tegra3_dvfs_rail_vdd_cpu = {
 	.reg_id = "vdd_cpu",
 	.max_millivolts = 1250,
 #ifdef CONFIG_MACH_X3
-	.min_millivolts = 800,
+	.min_millivolts = 600,
 #else
-	.min_millivolts = 725,
+	.min_millivolts = 700,
 #endif
 	.step = VDD_SAFE_STEP,
 	.jmp_to_zero = true,
@@ -72,9 +72,9 @@ static struct dvfs_rail tegra3_dvfs_rail_vdd_core = {
 	.reg_id = "vdd_core",
 	.max_millivolts = 1350,
 #ifdef CONFIG_MACH_X3
-	.min_millivolts = 1000,
-#else
 	.min_millivolts = 950,
+#else
+	.min_millivolts = 900,
 #endif
 	.step = VDD_SAFE_STEP,
 };
