@@ -146,7 +146,7 @@ static struct balanced_throttle throttle_list[] = {
 /* All units are in millicelsius */
 static struct tegra_thermal_data thermal_data = {
 	.shutdown_device_id = THERMAL_DEVICE_ID_NCT_EXT,
-	.temp_shutdown = 90000,
+	.temp_shutdown = 86000,
 #if defined(CONFIG_TEGRA_EDP_LIMITS) || defined(CONFIG_TEGRA_THERMAL_THROTTLE)
 	.throttle_edp_device_id = THERMAL_DEVICE_ID_NCT_EXT,
 #endif
@@ -155,7 +155,7 @@ static struct tegra_thermal_data thermal_data = {
 	.hysteresis_edp = 3000,
 #endif
 #ifdef CONFIG_TEGRA_THERMAL_THROTTLE
-	.temp_throttle = 71000, //default 85000
+	.temp_throttle = 80000, //default 85000
 	.tc1 = 0,
 	.tc2 = 1,
 	.passive_delay = 2000,
