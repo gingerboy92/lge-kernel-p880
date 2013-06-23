@@ -1,1 +1,4 @@
-obj-y += userspace.o balanced.o
+# cpuquiet governor
+obj-$(CONFIG_CPUQUIET_GOVERNOR_BALANCED)	+= balanced.o
+obj-$(CONFIG_CPUQUIET_GOVERNOR_RUNNABLE)	+= runnable_threads.o
+obj-$(CONFIG_CPUQUIET_GOVERNOR_RQSTATS)	+= rq_stats.o

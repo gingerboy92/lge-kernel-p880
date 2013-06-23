@@ -21,7 +21,6 @@
 #include <linux/cpumask.h>
 #include <linux/module.h>
 #include <linux/cpufreq.h>
-#include <linux/pm_qos_params.h>
 #include <linux/jiffies.h>
 #include <linux/slab.h>
 #include <linux/cpu.h>
@@ -29,7 +28,16 @@
 #include <linux/tick.h>
 #include <asm/cputime.h>
 
+// from cpu-tegra.c
+extern unsigned int best_core_to_turn_up (void);
+// from cpuquiet.c
+extern unsigned int tegra_cpq_max_cpus(void);
+extern unsigned int tegra_cpq_min_cpus(void);
+
 #define CPUNAMELEN 8
+
+#define UP_DELAY_MS			70
+#define DOWN_DELAY_MS		500
 
 typedef enum {
 	CPU_SPEED_BALANCED,
@@ -60,8 +68,8 @@ static bool load_timer_active;
 static unsigned int  balance_level = 60;
 static unsigned int  idle_bottom_freq;
 static unsigned int  idle_top_freq;
-static unsigned long up_delay;
-static unsigned long down_delay;
+static unsigned int	 up_delay = UP_DELAY_MS;
+static unsigned int	 down_delay = DOWN_DELAY_MS;
 static unsigned long last_change_time;
 static unsigned int  load_sample_rate = 20; /* msec */
 static struct workqueue_struct *balanced_wq;
@@ -183,7 +191,7 @@ static CPU_SPEED_BALANCE balanced_speed_balance(void)
 	unsigned long balanced_speed = highest_speed * balance_level / 100;
 	unsigned long skewed_speed = balanced_speed / 2;
 	unsigned int nr_cpus = num_online_cpus();
-	unsigned int max_cpus = pm_qos_request(PM_QOS_MAX_ONLINE_CPUS) ? : 4;
+	unsigned int max_cpus = tegra_cpq_max_cpus();
 	unsigned int avg_nr_run = avg_nr_running();
 	unsigned int nr_run;
 
@@ -215,7 +223,9 @@ static void balanced_work_func(struct work_struct *work)
 	bool up = false;
 	unsigned int cpu = nr_cpu_ids;
 	unsigned long now = jiffies;
-
+	unsigned int nr_cpus = num_online_cpus();
+	unsigned int min_cpus = tegra_cpq_min_cpus();
+	
 	CPU_SPEED_BALANCE balance;
 
 	switch (balanced_state) {
@@ -226,7 +236,7 @@ static void balanced_work_func(struct work_struct *work)
 		if (cpu < nr_cpu_ids) {
 			up = false;
 			queue_delayed_work(balanced_wq,
-						 &balanced_work, up_delay);
+						 &balanced_work, msecs_to_jiffies(up_delay));
 		} else
 			stop_load_timer();
 		break;
@@ -236,7 +246,8 @@ static void balanced_work_func(struct work_struct *work)
 
 		/* cpu speed is up and balanced - one more on-line */
 		case CPU_SPEED_BALANCED:
-			cpu = cpumask_next_zero(0, cpu_online_mask);
+			cpu = best_core_to_turn_up();
+			//cpu = cpumask_next_zero(0, cpu_online_mask);
 			if (cpu < nr_cpu_ids)
 				up = true;
 			break;
@@ -252,14 +263,18 @@ static void balanced_work_func(struct work_struct *work)
 			break;
 		}
 		queue_delayed_work(
-			balanced_wq, &balanced_work, up_delay);
+			balanced_wq, &balanced_work, msecs_to_jiffies(up_delay));
 		break;
 	default:
 		pr_err("%s: invalid cpuquiet balanced governor state %d\n",
 		       __func__, balanced_state);
 	}
 
-	if (!up && ((now - last_change_time) < down_delay))
+	if (!up && ((now - last_change_time) < msecs_to_jiffies(down_delay)))
+		cpu = nr_cpu_ids;
+
+	// min_cpu restriction
+	if (!up && nr_cpus == min_cpus)
 		cpu = nr_cpu_ids;
 
 	if (cpu < nr_cpu_ids) {
@@ -285,13 +300,13 @@ static int balanced_cpufreq_transition(struct notifier_block *nb,
 			if (cpu_freq >= idle_top_freq) {
 				balanced_state = UP;
 				queue_delayed_work(
-					balanced_wq, &balanced_work, up_delay);
+					balanced_wq, &balanced_work, msecs_to_jiffies(up_delay));
 				start_load_timer();
 			} else if (cpu_freq <= idle_bottom_freq) {
 				balanced_state = DOWN;
 				queue_delayed_work(
 					balanced_wq, &balanced_work,
-					down_delay);
+					msecs_to_jiffies(down_delay));
 				start_load_timer();
 			}
 			break;
@@ -299,7 +314,7 @@ static int balanced_cpufreq_transition(struct notifier_block *nb,
 			if (cpu_freq >= idle_top_freq) {
 				balanced_state = UP;
 				queue_delayed_work(
-					balanced_wq, &balanced_work, up_delay);
+					balanced_wq, &balanced_work, msecs_to_jiffies(up_delay));
 				start_load_timer();
 			}
 			break;
@@ -307,13 +322,13 @@ static int balanced_cpufreq_transition(struct notifier_block *nb,
 			if (cpu_freq <= idle_bottom_freq) {
 				balanced_state = DOWN;
 				queue_delayed_work(balanced_wq,
-					&balanced_work, up_delay);
+					&balanced_work, msecs_to_jiffies(up_delay));
 				start_load_timer();
 			}
 			break;
 		default:
-			pr_err("%s: invalid cpuquiet balanced governor "
-				"state %d\n", __func__, balanced_state);
+			pr_err("%s: invalid tegra hotplug state %d\n",
+				__func__, balanced_state);
 		}
 	}
 
@@ -324,22 +339,42 @@ static struct notifier_block balanced_cpufreq_nb = {
 	.notifier_call = balanced_cpufreq_transition,
 };
 
-static void delay_callback(struct cpuquiet_attribute *attr)
+static ssize_t show_nr_run_thresholds(struct cpuquiet_attribute *cattr, char *buf)
 {
-	unsigned long val;
+	char *out = buf;
+	
+	out += sprintf(out, "%d %d %d %d\n", nr_run_thresholds[0], nr_run_thresholds[1], nr_run_thresholds[2], nr_run_thresholds[3]);
 
-	if (attr) {
-		val = (*((unsigned long *)(attr->param)));
-		(*((unsigned long *)(attr->param))) = msecs_to_jiffies(val);
-	}
+	return out - buf;
 }
 
+static ssize_t store_nr_run_thresholds(struct cpuquiet_attribute *cattr,
+					const char *buf, size_t count)
+{
+	int ret;
+	int user_nr_run_thresholds[] = { 5, 9, 10, UINT_MAX };
+	
+	ret = sscanf(buf, "%d %d %d %d", &user_nr_run_thresholds[0], &user_nr_run_thresholds[1], &user_nr_run_thresholds[2], &user_nr_run_thresholds[3]);
+
+	if (ret != 4)
+		return -EINVAL;
+
+	nr_run_thresholds[0] = user_nr_run_thresholds[0];
+	nr_run_thresholds[1] = user_nr_run_thresholds[1];
+	nr_run_thresholds[2] = user_nr_run_thresholds[2];
+	nr_run_thresholds[3] = user_nr_run_thresholds[3];
+	
+	return count;
+}
+					
 CPQ_BASIC_ATTRIBUTE(balance_level, 0644, uint);
 CPQ_BASIC_ATTRIBUTE(idle_bottom_freq, 0644, uint);
 CPQ_BASIC_ATTRIBUTE(idle_top_freq, 0644, uint);
 CPQ_BASIC_ATTRIBUTE(load_sample_rate, 0644, uint);
-CPQ_ATTRIBUTE(up_delay, 0644, ulong, delay_callback);
-CPQ_ATTRIBUTE(down_delay, 0644, ulong, delay_callback);
+CPQ_BASIC_ATTRIBUTE(up_delay, 0644, uint);
+CPQ_BASIC_ATTRIBUTE(down_delay, 0644, uint);
+CPQ_ATTRIBUTE_CUSTOM(nr_run_thresholds, 0644, show_nr_run_thresholds, store_nr_run_thresholds);
+CPQ_BASIC_ATTRIBUTE(nr_run_hysteresis, 0644, uint);
 
 static struct attribute *balanced_attributes[] = {
 	&balance_level_attr.attr,
@@ -348,6 +383,8 @@ static struct attribute *balanced_attributes[] = {
 	&up_delay_attr.attr,
 	&down_delay_attr.attr,
 	&load_sample_rate_attr.attr,
+	&nr_run_thresholds_attr.attr,
+	&nr_run_hysteresis_attr.attr,
 	NULL,
 };
 
@@ -403,22 +440,20 @@ static int balanced_start(void)
 	int err, count;
 	struct cpufreq_frequency_table *table;
 	struct cpufreq_freqs initial_freq;
-
+	
 	err = balanced_sysfs();
 	if (err)
 		return err;
-
+	
 	balanced_wq = alloc_workqueue("cpuquiet-balanced",
 			WQ_UNBOUND | WQ_RESCUER | WQ_FREEZABLE, 1);
 	if (!balanced_wq)
 		return -ENOMEM;
 
 	INIT_DELAYED_WORK(&balanced_work, balanced_work_func);
-
-	up_delay = msecs_to_jiffies(100);
-	down_delay = msecs_to_jiffies(500);
-
+	
 	table = cpufreq_frequency_get_table(0);
+
 	for (count = 0; table[count].frequency != CPUFREQ_TABLE_END; count++);
 
 	idle_top_freq = table[(count / 2) - 1].frequency;
@@ -456,6 +491,7 @@ static void __exit exit_balanced(void)
 }
 
 MODULE_LICENSE("GPL");
+// must not be in fs_initcall else it will crash in balanced_start
 module_init(init_balanced);
 module_exit(exit_balanced);
 
