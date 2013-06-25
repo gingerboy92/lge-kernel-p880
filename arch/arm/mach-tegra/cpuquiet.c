@@ -39,7 +39,7 @@
 
 #define INITIAL_STATE		TEGRA_CPQ_IDLE
 #define UP_DELAY_MS		70
-#define DOWN_DELAY_MS		250
+#define DOWN_DELAY_MS		2000
 
 static struct mutex *tegra3_cpu_lock;
 static struct workqueue_struct *cpuquiet_wq;
@@ -188,9 +188,6 @@ static void min_max_constraints_workfunc(struct work_struct *work)
 	int max_cpus = pm_qos_request(PM_QOS_MAX_ONLINE_CPUS) ? : 4;
 	int min_cpus = pm_qos_request(PM_QOS_MIN_ONLINE_CPUS);
 
-	if (cpq_state == TEGRA_CPQ_DISABLED)
-		return;
-
 	if (is_lp_cluster())
 		return;
 
@@ -222,14 +219,10 @@ static int min_cpus_notify(struct notifier_block *nb, unsigned long n, void *p)
 {
 	bool g_cluster = false;
 
-	if (cpq_state == TEGRA_CPQ_DISABLED)
-		return NOTIFY_OK;
-
 	mutex_lock(tegra3_cpu_lock);
 
 	if ((n >= 1) && is_lp_cluster()) {
-		/* make sure cpu rate is within g-mode
-		 * range before switching */
+		/* make sure cpu rate is within g-mode range before switching */
 		unsigned long speed = max((unsigned long)tegra_getspeed(0),
 					clk_get_min_rate(cpu_g_clk) / 1000);
 		tegra_update_cpu_speed(speed);
@@ -251,9 +244,6 @@ static int min_cpus_notify(struct notifier_block *nb, unsigned long n, void *p)
 
 static int max_cpus_notify(struct notifier_block *nb, unsigned long n, void *p)
 {
-	if (cpq_state == TEGRA_CPQ_DISABLED)
-		return NOTIFY_OK;
-
 	if (n < num_online_cpus())
 		schedule_work(&minmax_work);
 
@@ -321,23 +311,32 @@ static void delay_callback(struct cpuquiet_attribute *attr)
 
 static void enable_callback(struct cpuquiet_attribute *attr)
 {
+	int disabled = -1;
+
 	mutex_lock(tegra3_cpu_lock);
 
 	if (!enable && cpq_state != TEGRA_CPQ_DISABLED) {
+		disabled = 1;
 		cpq_state = TEGRA_CPQ_DISABLED;
-		mutex_unlock(tegra3_cpu_lock);
-		cancel_delayed_work_sync(&cpuquiet_work);
-		pr_info("Tegra cpuquiet clusterswitch disabled\n");
-		cpuquiet_device_busy();
-		mutex_lock(tegra3_cpu_lock);
 	} else if (enable && cpq_state == TEGRA_CPQ_DISABLED) {
+		disabled = 0;
 		cpq_state = TEGRA_CPQ_IDLE;
-		pr_info("Tegra cpuquiet clusterswitch enabled\n");
 		tegra_cpu_set_speed_cap(NULL);
-		cpuquiet_device_free();
 	}
 
 	mutex_unlock(tegra3_cpu_lock);
+
+	if (disabled == -1)
+		return;
+
+	if (disabled == 1) {
+		cancel_delayed_work_sync(&cpuquiet_work);
+		pr_info("Tegra cpuquiet clusterswitch disabled\n");
+		cpuquiet_device_busy();
+	} else if (!disabled) {
+		pr_info("Tegra cpuquiet clusterswitch enabled\n");
+		cpuquiet_device_free();
+	}
 }
 
 CPQ_BASIC_ATTRIBUTE(no_lp, 0644, bool);
@@ -411,6 +410,13 @@ int tegra_auto_hotplug_init(struct mutex *cpu_lock)
 
 	INIT_DELAYED_WORK(&cpuquiet_work, tegra_cpuquiet_work_func);
 	INIT_WORK(&minmax_work, min_max_constraints_workfunc);
+
+	cpu_clk = clk_get_sys(NULL, "cpu");
+	cpu_g_clk = clk_get_sys(NULL, "cpu_g");
+	cpu_lp_clk = clk_get_sys(NULL, "cpu_lp");
+
+	if (IS_ERR(cpu_clk) || IS_ERR(cpu_g_clk) || IS_ERR(cpu_lp_clk))
+		return -ENOENT;
 
 	idle_top_freq = clk_get_max_rate(cpu_lp_clk) / 1000;
 	idle_bottom_freq = clk_get_min_rate(cpu_g_clk) / 1000;
