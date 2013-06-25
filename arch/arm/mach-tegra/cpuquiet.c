@@ -134,11 +134,7 @@ static void apply_core_config(void)
 
 static void tegra_cpuquiet_work_func(struct work_struct *work)
 {
-<<<<<<< HEAD
 	int device_busy = -1;
-=======
-	bool state_changed = false;
->>>>>>> c3d229d... ARM: tegra: cpuquiet: Notify the cpuquiet governor when the driver is busy
 
 	mutex_lock(tegra3_cpu_lock);
 
@@ -152,11 +148,7 @@ static void tegra_cpuquiet_work_func(struct work_struct *work)
 					/*catch-up with governor target speed */
 					tegra_cpu_set_speed_cap(NULL);
 					/* process pending core requests*/
-<<<<<<< HEAD
 					device_busy = 0;
-=======
-					state_changed = true;
->>>>>>> c3d229d... ARM: tegra: cpuquiet: Notify the cpuquiet governor when the driver is busy
 				}
 			}
 			break;
@@ -167,11 +159,7 @@ static void tegra_cpuquiet_work_func(struct work_struct *work)
 				if (!clk_set_parent(cpu_clk, cpu_lp_clk)) {
 					/*catch-up with governor target speed*/
 					tegra_cpu_set_speed_cap(NULL);
-<<<<<<< HEAD
 					device_busy = 1;
-=======
-					state_changed = true;
->>>>>>> c3d229d... ARM: tegra: cpuquiet: Notify the cpuquiet governor when the driver is busy
 				}
 			}
 			break;
@@ -182,15 +170,9 @@ static void tegra_cpuquiet_work_func(struct work_struct *work)
 
 	mutex_unlock(tegra3_cpu_lock);
 
-<<<<<<< HEAD
 	if (device_busy == 1) {
 		cpuquiet_device_busy();
 	} else if (!device_busy) {
-=======
-	if (state_changed && cpq_state == TEGRA_CPQ_SWITCH_TO_LP) {
-		cpuquiet_device_busy();
-	} else if (state_changed && cpq_state == TEGRA_CPQ_SWITCH_TO_G) {
->>>>>>> c3d229d... ARM: tegra: cpuquiet: Notify the cpuquiet governor when the driver is busy
 		apply_core_config();
 		cpuquiet_device_free();
 	}
@@ -240,12 +222,9 @@ static int min_cpus_notify(struct notifier_block *nb, unsigned long n, void *p)
 {
 	bool g_cluster = false;
 
-<<<<<<< HEAD
 	if (cpq_state == TEGRA_CPQ_DISABLED)
 		return NOTIFY_OK;
 
-=======
->>>>>>> c3d229d... ARM: tegra: cpuquiet: Notify the cpuquiet governor when the driver is busy
 	mutex_lock(tegra3_cpu_lock);
 
 	if ((n >= 1) && is_lp_cluster()) {
