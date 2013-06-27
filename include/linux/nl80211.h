@@ -545,15 +545,8 @@ enum nl80211_commands {
 
 	NL80211_CMD_GET_BEACON,
 	NL80211_CMD_SET_BEACON,
-#ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE
-	NL80211_CMD_START_AP,
-	NL80211_CMD_NEW_BEACON = NL80211_CMD_START_AP,
-	NL80211_CMD_STOP_AP,
-	NL80211_CMD_DEL_BEACON = NL80211_CMD_STOP_AP,
-#else	
 	NL80211_CMD_NEW_BEACON,
 	NL80211_CMD_DEL_BEACON,
-#endif
 
 	NL80211_CMD_GET_STATION,
 	NL80211_CMD_SET_STATION,
@@ -651,22 +644,6 @@ enum nl80211_commands {
 	NL80211_CMD_SCHED_SCAN_STOPPED,
 
 	NL80211_CMD_SET_REKEY_OFFLOAD,
-#ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE
-	NL80211_CMD_PMKSA_CANDIDATE,
-
-	NL80211_CMD_TDLS_OPER,
-	NL80211_CMD_TDLS_MGMT,
-
-	NL80211_CMD_UNEXPECTED_FRAME,
-
-	NL80211_CMD_PROBE_CLIENT,
-
-	NL80211_CMD_REGISTER_BEACONS,
-
-	NL80211_CMD_UNEXPECTED_4ADDR_FRAME,
-
-	NL80211_CMD_SET_NOACK_MAP,
-#endif
 
 	NL80211_CMD_PMKSA_CANDIDATE,
 
@@ -1340,13 +1317,6 @@ enum nl80211_attrs {
 	NL80211_ATTR_WIPHY_ANTENNA_AVAIL_TX,
 	NL80211_ATTR_WIPHY_ANTENNA_AVAIL_RX,
 
-<<<<<<< HEAD
-#ifdef CONFIG_WIFI_KERNEL_3_4_DISABLE
-	NL80211_ATTR_SCAN_FLAGS,
-#endif
-
-=======
->>>>>>> d804779... 264 to 298 patch
 	NL80211_ATTR_SUPPORT_MESH_AUTH,
 	NL80211_ATTR_STA_PLINK_STATE,
 
@@ -1365,10 +1335,6 @@ enum nl80211_attrs {
 
 	NL80211_ATTR_SCAN_SUPP_RATES,
 
-<<<<<<< HEAD
-#ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE
-=======
->>>>>>> d804779... 264 to 298 patch
 	NL80211_ATTR_HIDDEN_SSID,
 
 	NL80211_ATTR_IE_PROBE_RESP,
@@ -1394,30 +1360,6 @@ enum nl80211_attrs {
 
 	NL80211_ATTR_DEVICE_AP_SME,
 
-<<<<<<< HEAD
-	NL80211_ATTR_DONT_WAIT_FOR_ACK,
-
-	NL80211_ATTR_FEATURE_FLAGS,
-
-	NL80211_ATTR_PROBE_RESP_OFFLOAD,
-
-	NL80211_ATTR_PROBE_RESP,
-
-	NL80211_ATTR_DFS_REGION,
-
-	NL80211_ATTR_DISABLE_HT,
-	NL80211_ATTR_HT_CAPABILITY_MASK,
-
-	NL80211_ATTR_NOACK_MAP,
-
-	NL80211_ATTR_INACTIVITY_TIMEOUT,
-
-	NL80211_ATTR_RX_SIGNAL_DBM,
-
-	NL80211_ATTR_BG_SCAN_PERIOD,
-#endif
-=======
->>>>>>> d804779... 264 to 298 patch
 	/* add attributes here, update the policy in nl80211.c */
 
 	__NL80211_ATTR_AFTER_LAST,
@@ -1452,14 +1394,8 @@ enum nl80211_attrs {
 #define NL80211_ATTR_AKM_SUITES NL80211_ATTR_AKM_SUITES
 #define NL80211_ATTR_KEY NL80211_ATTR_KEY
 #define NL80211_ATTR_KEYS NL80211_ATTR_KEYS
-#ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE
-#define NL80211_ATTR_FEATURE_FLAGS NL80211_ATTR_FEATURE_FLAGS
-#endif
 
 #define NL80211_MAX_SUPP_RATES			32
-#ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE
-#define NL80211_MAX_SUPP_HT_RATES		77
-#endif
 #define NL80211_MAX_SUPP_REG_RULES		32
 #define NL80211_TKIP_DATA_OFFSET_ENCR_KEY	0
 #define NL80211_TKIP_DATA_OFFSET_TX_MIC_KEY	16
@@ -1531,9 +1467,7 @@ enum nl80211_sta_flags {
 	NL80211_STA_FLAG_WME,
 	NL80211_STA_FLAG_MFP,
 	NL80211_STA_FLAG_AUTHENTICATED,
-#ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE
-	NL80211_STA_FLAG_TDLS_PEER,
-#endif
+
 	/* keep last */
 	__NL80211_STA_FLAG_AFTER_LAST,
 	NL80211_STA_FLAG_MAX = __NL80211_STA_FLAG_AFTER_LAST - 1
@@ -1656,10 +1590,7 @@ enum nl80211_sta_info {
 	NL80211_STA_INFO_RX_BITRATE,
 	NL80211_STA_INFO_BSS_PARAM,
 	NL80211_STA_INFO_CONNECTED_TIME,
-#ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE
-	NL80211_STA_INFO_STA_FLAGS,
-	NL80211_STA_INFO_BEACON_LOSS,
-#endif
+
 	/* keep last */
 	__NL80211_STA_INFO_AFTER_LAST,
 	NL80211_STA_INFO_MAX = __NL80211_STA_INFO_AFTER_LAST - 1
@@ -1887,28 +1818,6 @@ enum nl80211_reg_rule_attr {
 	NL80211_REG_RULE_ATTR_MAX = __NL80211_REG_RULE_ATTR_AFTER_LAST - 1
 };
 
-#ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE
-/**
- * enum nl80211_sched_scan_match_attr - scheduled scan match attributes
- * @__NL80211_SCHED_SCAN_MATCH_ATTR_INVALID: attribute number 0 is reserved
- * @NL80211_SCHED_SCAN_MATCH_ATTR_SSID: SSID to be used for matching,
- * only report BSS with matching SSID.
- * @NL80211_SCHED_SCAN_MATCH_ATTR_MAX: highest scheduled scan filter
- *	attribute number currently defined
- * @__NL80211_SCHED_SCAN_MATCH_ATTR_AFTER_LAST: internal use
- */
-enum nl80211_sched_scan_match_attr {
-	__NL80211_SCHED_SCAN_MATCH_ATTR_INVALID,
-
-	NL80211_ATTR_SCHED_SCAN_MATCH_SSID,
-
-	/* keep last */
-	__NL80211_SCHED_SCAN_MATCH_ATTR_AFTER_LAST,
-	NL80211_SCHED_SCAN_MATCH_ATTR_MAX =
-		__NL80211_SCHED_SCAN_MATCH_ATTR_AFTER_LAST - 1
-};
-#endif
-
 /**
  * enum nl80211_sched_scan_match_attr - scheduled scan match attributes
  * @__NL80211_SCHED_SCAN_MATCH_ATTR_INVALID: attribute number 0 is reserved
@@ -1953,23 +1862,6 @@ enum nl80211_reg_rule_flags {
 	NL80211_RRF_PASSIVE_SCAN	= 1<<7,
 	NL80211_RRF_NO_IBSS		= 1<<8,
 };
-
-#ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE
-/**
- * enum nl80211_dfs_regions - regulatory DFS regions
- *
- * @NL80211_DFS_UNSET: Country has no DFS master region specified
- * @NL80211_DFS_FCC_: Country follows DFS master rules from FCC
- * @NL80211_DFS_FCC_: Country follows DFS master rules from ETSI
- * @NL80211_DFS_JP_: Country follows DFS master rules from JP/MKK/Telec
- */
-enum nl80211_dfs_regions {
-	NL80211_DFS_UNSET	= 0,
-	NL80211_DFS_FCC		= 1,
-	NL80211_DFS_ETSI	= 2,
-	NL80211_DFS_JP		= 3,
-};
-#endif
 
 /**
  * enum nl80211_survey_info - survey information
@@ -2118,13 +2010,6 @@ enum nl80211_meshconf_params {
 	NL80211_MESHCONF_HWMP_NET_DIAM_TRVS_TIME,
 	NL80211_MESHCONF_HWMP_ROOTMODE,
 	NL80211_MESHCONF_ELEMENT_TTL,
-#ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE
-	NL80211_MESHCONF_HWMP_RANN_INTERVAL,
-	NL80211_MESHCONF_GATE_ANNOUNCEMENTS,
-	NL80211_MESHCONF_HWMP_PERR_MIN_INTERVAL,
-	NL80211_MESHCONF_FORWARDING,
-	NL80211_MESHCONF_RSSI_THRESHOLD,
-#endif
 
 	/* keep last */
 	__NL80211_MESHCONF_ATTR_AFTER_LAST,
@@ -2404,9 +2289,7 @@ enum nl80211_key_attributes {
 enum nl80211_tx_rate_attributes {
 	__NL80211_TXRATE_INVALID,
 	NL80211_TXRATE_LEGACY,
-#ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE	
-		NL80211_TXRATE_MCS,
-#endif
+
 	/* keep last */
 	__NL80211_TXRATE_AFTER_LAST,
 	NL80211_TXRATE_MAX = __NL80211_TXRATE_AFTER_LAST - 1
@@ -2703,10 +2586,6 @@ enum nl80211_rekey_data {
 	MAX_NL80211_REKEY_DATA = NUM_NL80211_REKEY_DATA - 1
 };
 
-<<<<<<< HEAD
-#ifndef CONFIG_WIFI_KERNEL_3_4_DISABLE
-=======
->>>>>>> d804779... 264 to 298 patch
 /**
  * enum nl80211_hidden_ssid - values for %NL80211_ATTR_HIDDEN_SSID
  * @NL80211_HIDDEN_SSID_NOT_IN_USE: do not hide SSID (i.e., broadcast it in
@@ -2789,44 +2668,4 @@ enum nl80211_ap_sme_features {
 };
  */
 
-<<<<<<< HEAD
-/**
- * enum nl80211_feature_flags - device/driver features
- * @NL80211_FEATURE_SK_TX_STATUS: This driver supports reflecting back
- *	TX status to the socket error queue when requested with the
- *	socket option.
- * @NL80211_FEATURE_HT_IBSS: This driver supports IBSS with HT datarates.
- * @NL80211_FEATURE_INACTIVITY_TIMER: This driver takes care of freeing up
- *	the connected inactive stations in AP mode.
- */
-enum nl80211_feature_flags {
-	NL80211_FEATURE_SK_TX_STATUS	= 1 << 0,
-	NL80211_FEATURE_HT_IBSS		= 1 << 1,
-	NL80211_FEATURE_INACTIVITY_TIMER = 1 << 2,
-};
-
-/**
- * enum nl80211_probe_resp_offload_support_attr - optional supported
- *	protocols for probe-response offloading by the driver/FW.
- *	To be used with the %NL80211_ATTR_PROBE_RESP_OFFLOAD attribute.
- *	Each enum value represents a bit in the bitmap of supported
- *	protocols. Typically a subset of probe-requests belonging to a
- *	supported protocol will be excluded from offload and uploaded
- *	to the host.
- *
- * @NL80211_PROBE_RESP_OFFLOAD_SUPPORT_WPS: Support for WPS ver. 1
- * @NL80211_PROBE_RESP_OFFLOAD_SUPPORT_WPS2: Support for WPS ver. 2
- * @NL80211_PROBE_RESP_OFFLOAD_SUPPORT_P2P: Support for P2P
- * @NL80211_PROBE_RESP_OFFLOAD_SUPPORT_80211U: Support for 802.11u
- */
-enum nl80211_probe_resp_offload_support_attr {
-	NL80211_PROBE_RESP_OFFLOAD_SUPPORT_WPS =	1<<0,
-	NL80211_PROBE_RESP_OFFLOAD_SUPPORT_WPS2 =	1<<1,
-	NL80211_PROBE_RESP_OFFLOAD_SUPPORT_P2P =	1<<2,
-	NL80211_PROBE_RESP_OFFLOAD_SUPPORT_80211U =	1<<3,
-};
-#endif
-
-=======
->>>>>>> d804779... 264 to 298 patch
 #endif /* __LINUX_NL80211_H */

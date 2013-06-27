@@ -48,7 +48,6 @@ DHDCFLAGS += -DWL_SCB_TIMEOUT=10
 # For Passing all multicast packets to host when not in suspend mode.
 DHDCFLAGS += -DPASS_ALL_MCAST_PKTS
 
-<<<<<<< HEAD
 # Early suspend
 #DHDCFLAGS += -DDHD_USE_EARLYSUSPEND 
 
@@ -66,21 +65,18 @@ ifeq ($(CONFIG_BROADCOM_WIFI_RESERVED_MEM),y)
   DHDCFLAGS += -DCONFIG_DHD_USE_STATIC_BUF
   DHDCFLAGS += -DENHANCED_STATIC_BUF
   DHDCFLAGS += -DSTATIC_WL_PRIV_STRUCT
-=======
+
 ifneq ($(CONFIG_CFG80211),)
 bcmdhd-objs += wl_cfg80211.o wl_cfgp2p.o wl_linux_mon.o
 DHDCFLAGS += -DWL_CFG80211
 DHDCFLAGS += -DCUSTOM_ROAM_TRIGGER_SETTING=-65
 DHDCFLAGS += -DCUSTOM_ROAM_DELTA_SETTING=15
->>>>>>> d804779... 264 to 298 patch
 endif
 
 # For CCX
 ifeq ($(CONFIG_BRCM_CCX),y)
   DHDCFLAGS += -DBCMCCX
 endif
-
-DHDCFLAGS += -DWL_CFG80211
 
 # SoftAP
 DHDCFLAGS += -DSUPPORT_AUTO_CHANNEL -DSUPPORT_HIDDEN_AP
@@ -193,10 +189,7 @@ DHDOFILES := \
 	     src/shared/sbutils.o \
 	     src/shared/siutils.o \
 	     src/wl/sys/wl_android.o \
-	     src/wl/sys/wl_cfg80211.o \
-	     src/wl/sys/wl_cfgp2p.o \
 	     src/wl/sys/wldev_common.o \
-	     src/wl/sys/wl_linux_mon.o \
 	     src/wl/sys/wl_roam.o
 
 obj-$(CONFIG_BCMDHD) += bcmdhd.o

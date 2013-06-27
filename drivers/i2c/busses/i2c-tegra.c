@@ -39,6 +39,9 @@
 
 #include <mach/clk.h>
 #include <mach/pinmux.h>
+#if defined(CONFIG_HAS_EARLYSUSPEND)
+#include <linux/earlysuspend.h>
+#endif
 
 #define TEGRA_I2C_TIMEOUT			(msecs_to_jiffies(1000))
 #define TEGRA_I2C_RETRIES			3
@@ -202,7 +205,17 @@ struct tegra_i2c_dev {
 	u16 hs_master_code;
 	int (*arb_recovery)(int scl_gpio, int sda_gpio);
 	struct tegra_i2c_bus busses[1];
+#if defined(CONFIG_HAS_EARLYSUSPEND)
+	struct early_suspend early_suspend;
+#endif
+
 };
+
+#if defined(CONFIG_HAS_EARLYSUSPEND)
+#define EARLY_SUSPEND_LEVEL_MAX		EARLY_SUSPEND_LEVEL_DISABLE_FB
+static void tegra_i2c_early_suspend(struct early_suspend *es);
+static void tegra_i2c_early_resume(struct early_suspend *es);
+#endif
 
 static void dvc_writel(struct tegra_i2c_dev *i2c_dev, u32 val, unsigned long reg)
 {
@@ -478,15 +491,7 @@ static int tegra_i2c_init(struct tegra_i2c_dev *i2c_dev)
 	u32 val;
 	int err = 0;
 
-	if (!i2c_dev->is_clkon_always)
 	tegra_i2c_clock_enable(i2c_dev);
-
-//                    
-	/* Interrupt generated before sending stop signal so
-	* wait for some time so that stop signal can be send proerly */
-//		dev_err(i2c_dev->dev,
-//			"i2c-time check, err \n");
-	mdelay(1);
 
 	tegra_periph_reset_assert(i2c_dev->div_clk);
 	udelay(2);
@@ -521,7 +526,6 @@ static int tegra_i2c_init(struct tegra_i2c_dev *i2c_dev)
 	if (tegra_i2c_flush_fifos(i2c_dev))
 		err = -ETIMEDOUT;
 
-	if (!i2c_dev->is_clkon_always)
 	tegra_i2c_clock_disable(i2c_dev);
 
 	if (i2c_dev->irq_disabled) {
@@ -824,7 +828,6 @@ static int tegra_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg msgs[],
 	i2c_dev->msgs_num = num;
 
 	pm_runtime_get_sync(&adap->dev);
-	if (!i2c_dev->is_clkon_always)
 	tegra_i2c_clock_enable(i2c_dev);
 
 	for (i = 0; i < num; i++) {
@@ -840,7 +843,6 @@ static int tegra_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg msgs[],
 			break;
 	}
 
-	if (!i2c_dev->is_clkon_always)
 	tegra_i2c_clock_disable(i2c_dev);
 	pm_runtime_put(&adap->dev);
 
@@ -986,6 +988,16 @@ static int __devinit tegra_i2c_probe(struct platform_device *pdev)
 	i2c_dev->hs_master_code = plat->hs_master_code;
 	i2c_dev->is_dvc = plat->is_dvc;
 	i2c_dev->arb_recovery = plat->arb_recovery;
+
+#if defined(CONFIG_HAS_EARLYSUSPEND)
+	if (i2c_dev->is_clkon_always) {
+		i2c_dev->early_suspend.level = EARLY_SUSPEND_LEVEL_MAX + 1;
+		i2c_dev->early_suspend.suspend = tegra_i2c_early_suspend;
+		i2c_dev->early_suspend.resume = tegra_i2c_early_resume;
+		register_early_suspend(&i2c_dev->early_suspend);
+	}
+#endif
+
 	init_completion(&i2c_dev->msg_complete);
 
 	platform_set_drvdata(pdev, i2c_dev);
@@ -1072,8 +1084,6 @@ static int __devexit tegra_i2c_remove(struct platform_device *pdev)
 	return 0;
 }
 
-<<<<<<< HEAD
-=======
 #if defined(CONFIG_HAS_EARLYSUSPEND)
 static void tegra_i2c_early_suspend(struct early_suspend *es)
 {
@@ -1107,7 +1117,6 @@ static void tegra_i2c_early_resume(struct early_suspend *es)
 	rt_mutex_unlock(&i2c_dev->dev_lock);
 }
 #endif
->>>>>>> d804779... 264 to 298 patch
 
 #ifdef CONFIG_PM_SLEEP
 static int tegra_i2c_suspend_noirq(struct device *dev)
@@ -1117,9 +1126,14 @@ static int tegra_i2c_suspend_noirq(struct device *dev)
 
 	rt_mutex_lock(&i2c_dev->dev_lock);
 
-	i2c_dev->is_suspended = true;
-//	if (i2c_dev->is_clkon_always)
+#ifndef CONFIG_HAS_EARLYSUSPEND
+	if (i2c_dev->is_clkon_always)
 		tegra_i2c_clock_disable(i2c_dev);
+	i2c_dev->is_suspended = true;
+#else
+	if (!i2c_dev->is_clkon_always)
+		i2c_dev->is_suspended = true;
+#endif
 
 	rt_mutex_unlock(&i2c_dev->dev_lock);
 
@@ -1136,9 +1150,9 @@ static int tegra_i2c_resume_noirq(struct device *dev)
 
 	(void) ret;
 
-
+#ifndef CONFIG_HAS_EARLYSUSPEND
 	if (i2c_dev->is_clkon_always)
-	tegra_i2c_clock_enable(i2c_dev);
+		tegra_i2c_clock_enable(i2c_dev);
 
 	ret = tegra_i2c_init(i2c_dev);
 	if (ret) {
@@ -1147,7 +1161,16 @@ static int tegra_i2c_resume_noirq(struct device *dev)
 	}
 
 	i2c_dev->is_suspended = false;
-
+#else
+	if (!i2c_dev->is_clkon_always) {
+		ret = tegra_i2c_init(i2c_dev);
+		if (ret) {
+			rt_mutex_unlock(&i2c_dev->dev_lock);
+			return ret;
+		}
+		i2c_dev->is_suspended = false;
+	}
+#endif
 
 
 

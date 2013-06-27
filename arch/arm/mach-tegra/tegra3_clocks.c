@@ -862,13 +862,9 @@ static int tegra3_cpu_clk_set_rate(struct clk *c, unsigned long rate)
 			return -ENOSYS;
 		else if ((!c->dvfs->dvfs_rail->reg) &&
 			  (clk_get_rate_locked(c) < rate)) {
-<<<<<<< HEAD
-			pr_info("[imoseyon] bypassing cpu regulator warning.\n");
-=======
 			pr_warn("Increasing CPU rate while regulator is not"
 				" ready may overclock CPU\n");
 			return -ENOSYS;
->>>>>>> d804779... 264 to 298 patch
 		}
 	}
 
