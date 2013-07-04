@@ -3467,33 +3467,45 @@ static struct clk tegra_pll_p = {
 };
 
 static struct clk tegra_pll_p_out1 = {
-	.name = "pll_p_out1",
-	.ops = &tegra_pll_div_ops,
-	.flags = DIV_U71 | DIV_U71_FIXED,
-	.parent = &tegra_pll_p,
-	.reg = 0xa4,
+	.name      = "pll_p_out1",
+	.ops       = &tegra_pll_div_ops,
+#ifdef CONFIG_MACH_X3
+	.flags     = ENABLE_ON_INIT | DIV_U71 | DIV_U71_FIXED,
+#else
+	.flags     = DIV_U71 | DIV_U71_FIXED,
+#endif
+	.parent    = &tegra_pll_p,
+	.reg       = 0xa4,
 	.reg_shift = 0,
-	.max_rate = 432000000,
+	.max_rate  = 432000000,
 };
 
 static struct clk tegra_pll_p_out2 = {
-	.name = "pll_p_out2",
-	.ops = &tegra_pll_div_ops,
-	.flags = DIV_U71 | DIV_U71_FIXED,
-	.parent = &tegra_pll_p,
-	.reg = 0xa4,
+	.name      = "pll_p_out2",
+	.ops       = &tegra_pll_div_ops,
+#ifdef CONFIG_MACH_X3
+	.flags     = ENABLE_ON_INIT | DIV_U71 | DIV_U71_FIXED,
+#else
+	.flags     = DIV_U71 | DIV_U71_FIXED,
+#endif
+	.parent    = &tegra_pll_p,
+	.reg       = 0xa4,
 	.reg_shift = 16,
-	.max_rate = 432000000,
+	.max_rate  = 432000000,
 };
 
 static struct clk tegra_pll_p_out3 = {
-	.name = "pll_p_out3",
-	.ops = &tegra_pll_div_ops,
-	.flags = DIV_U71 | DIV_U71_FIXED,
-	.parent = &tegra_pll_p,
-	.reg = 0xa8,
+	.name      = "pll_p_out3",
+	.ops       = &tegra_pll_div_ops,
+#ifdef CONFIG_MACH_X3
+	.flags     = ENABLE_ON_INIT | DIV_U71 | DIV_U71_FIXED,
+#else
+	.flags     = DIV_U71 | DIV_U71_FIXED,
+#endif
+	.parent    = &tegra_pll_p,
+	.reg       = 0xa8,
 	.reg_shift = 0,
-	.max_rate = 432000000,
+	.max_rate  = 432000000,
 };
 
 static struct clk tegra_pll_p_out4 = {
@@ -4017,8 +4029,13 @@ static struct clk tegra_clk_sclk = {
 	.inputs	= mux_sclk,
 	.reg	= 0x28,
 	.ops	= &tegra_super_ops,
+#ifdef CONFIG_MACH_X3
+	.max_rate = 334000000,
+	.min_rate = SCLK_MIN_FREQ,
+#else
 	.max_rate = 378000000,
 	.min_rate = 12000000,
+#endif
 };
 
 static struct clk tegra_clk_virtual_cpu_g = {
@@ -4059,32 +4076,46 @@ static struct clk tegra_clk_cpu_cmplx = {
 };
 
 static struct clk tegra_clk_cop = {
-	.name = "cop",
-	.parent = &tegra_clk_sclk,
-	.ops = &tegra_cop_ops,
-	.max_rate = 378000000,
+	.name      = "cop",
+	.parent    = &tegra_clk_sclk,
+	.ops       = &tegra_cop_ops,
+#ifdef CONFIG_MACH_X3
+	.max_rate  = 334000000,
+#else
+	.max_rate  = 378000000,
+#endif
 };
 
 static struct clk tegra_clk_hclk = {
-	.name	= "hclk",
-	.flags	= DIV_BUS,
-	.parent	= &tegra_clk_sclk,
-	.reg	= 0x30,
+	.name		= "hclk",
+	.flags		= DIV_BUS,
+	.parent		= &tegra_clk_sclk,
+	.reg		= 0x30,
 	.reg_shift	= 4,
-	.ops	= &tegra_bus_ops,
-	.max_rate = 378000000,
-	.min_rate = 12000000,
+	.ops		= &tegra_bus_ops,
+#ifdef CONFIG_MACH_X3
+	.max_rate       = 334000000,
+	.min_rate       = SCLK_MIN_FREQ,
+#else
+	.max_rate       = 378000000,
+	.min_rate       = 12000000,
+#endif
 };
 
 static struct clk tegra_clk_pclk = {
-	.name	= "pclk",
-	.flags	= DIV_BUS,
-	.parent	= &tegra_clk_hclk,
-	.reg	= 0x30,
+	.name		= "pclk",
+	.flags		= DIV_BUS,
+	.parent		= &tegra_clk_hclk,
+	.reg		= 0x30,
 	.reg_shift	= 0,
-	.ops	= &tegra_bus_ops,
-	.max_rate = 167000000,
-	.min_rate = 12000000,
+	.ops		= &tegra_bus_ops,
+#ifdef CONFIG_MACH_X3
+	.max_rate       = 167000000,
+	.min_rate       = SCLK_MIN_FREQ,
+#else
+	.max_rate       = 167000000,
+	.min_rate       = 12000000,
+#endif
 };
 
 static struct raw_notifier_head sbus_rate_change_nh;
@@ -4238,14 +4269,19 @@ static struct clk tegra_clk_emc = {
 	.ops = &tegra_emc_clk_ops,
 	.reg = 0x19c,
 	.max_rate = 900000000,
-	.min_rate = 12000000,
+#if 0//def CONFIG_MACH_X3 JB native code use
+	.min_rate = 25000000,
+#else
+	.min_rate = 25000000,
+#endif
 	.inputs = mux_pllm_pllc_pllp_clkm,
+//                                                      
 	.flags = MUX | DIV_U71 | PERIPH_EMC_ENB,
 	.u.periph = {
-			.clk_num = 57,
+		.clk_num = 57,
 	},
 	.shared_bus_backup = {
-			.input = &tegra_pll_c,
+		.input = &tegra_pll_c,
 	},
 	.rate_change_nh = &emc_rate_change_nh,
 };
@@ -4256,18 +4292,25 @@ static struct clk tegra_clk_emc_bridge = {
 	.parent    = &tegra_clk_emc,
 };
 
+static RAW_NOTIFIER_HEAD(cbus_rate_change_nh);
+
 static struct clk tegra_clk_cbus = {
-		.name	= "cbus",
-		.parent = &tegra_pll_c,
-		.ops = &tegra_clk_cbus_ops,
-		.max_rate = 700000000,
-		.mul	= 1,
-		.div	= CONFIG_TEGRA_CBUS_CLOCK_DIVIDER,
-		.flags = PERIPH_ON_CBUS,
-		.shared_bus_backup = {
-				.input = &tegra_pll_p,
-				.value = 2,
-		}
+	.name	   = "cbus",
+	.parent    = &tegra_pll_c,
+	.ops       = &tegra_clk_cbus_ops,
+	.max_rate  = 700000000,
+	.mul	   = 1,
+#ifdef CONFIG_MACH_X3
+	.div	   = 2,
+#else
+	.div	   = CONFIG_TEGRA_CBUS_CLOCK_DIVIDER,
+#endif
+	.flags     = PERIPH_ON_CBUS,
+	.shared_bus_backup = {
+		.input = &tegra_pll_p,
+		.value = 2,
+	},
+	.rate_change_nh = &cbus_rate_change_nh,
 };
 
 #define PERIPH_CLK(_name, _dev, _con, _clk_num, _reg, _max, _inputs, _flags) \
