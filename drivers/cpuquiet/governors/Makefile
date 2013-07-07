@@ -3,3 +3,5 @@
  obj-$(CONFIG_CPUQUIET_GOVERNOR_USERSPACE)	    += userspace.o
  obj-$(CONFIG_CPUQUIET_GOVERNOR_RUNNABLE)	+= runnable_threads.o
  obj-$(CONFIG_CPUQUIET_GOVERNOR_RQSTATS)	    += rq_stats.o
+ obj-$(CONFIG_CPUQUIET_GOVERNOR_LOAD_STATS)	    += load_stats.o
+
