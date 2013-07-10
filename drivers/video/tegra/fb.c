@@ -185,10 +185,22 @@ static int tegra_fb_set_par(struct fb_info *info)
 #else
 					FB_VMODE_STEREO_LEFT_RIGHT);
 #endif
-		tegra_dc_set_fb_mode(tegra_fb->win->dc, info->mode, stereo);
-		/* Reflect the mode change on dc */
-		tegra_dc_disable(tegra_fb->win->dc);
-		tegra_dc_enable(tegra_fb->win->dc);
+
+	/* Configure DC with new mode */
+	if (tegra_dc_set_fb_mode(dc, info->mode, stereo)) {
+	/* Error while configuring DC, fallback to old mode */
+	dev_warn(&tegra_fb->ndev->dev, "can't configure dc with mode %ux%u\n",
+		info->mode->xres, info->mode->yres);
+		info->mode = old_mode;
+		info->fix.line_length = old_len;
+		tegra_fb->win->stride = old_len;
+		return -EINVAL;
+		}
+
+		/* Reflect mode chnage on DC HW */
+		if (dc->enabled)
+		tegra_dc_disable(dc);
+		tegra_dc_enable(dc); 
 
 		tegra_fb->win->w.full = dfixed_const(info->mode->xres);
 		tegra_fb->win->h.full = dfixed_const(info->mode->yres);
