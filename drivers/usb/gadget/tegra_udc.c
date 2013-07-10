@@ -2371,7 +2371,7 @@ static int tegra_udc_start(struct usb_gadget_driver *driver,
 	udc->ep0_dir = 0;
 	udc->vbus_active = vbus_enabled(udc); 
 
-	USB_INFO("%s: bind to driver %s\n",
+	printk(KERN_INFO "%s: bind to driver %s\n",
 		udc->gadget.name, driver->driver.name);
 
 out:
