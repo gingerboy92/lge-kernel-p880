@@ -193,13 +193,13 @@ DEFINE_PER_CPU(struct rcu_dynticks, rcu_dynticks) = {
 };
 #endif /* #ifdef CONFIG_NO_HZ */
 
-static long blimit = 10;	/* Maximum callbacks per rcu_do_batch. */
-static long qhimark = 10000;	/* If this many pending, ignore blimit. */
-static long qlowmark = 100;	/* Once only this many pending, use blimit. */
+static int blimit = 10;		/* Maximum callbacks per softirq. */
+static int qhimark = 10000;	/* If this many pending, ignore blimit. */
+static int qlowmark = 100;	/* Once only this many pending, use blimit. */
 
-module_param(blimit, long, 0);
-module_param(qhimark, long, 0);
-module_param(qlowmark, long, 0);
+module_param(blimit, int, 0);
+module_param(qhimark, int, 0);
+module_param(qlowmark, int, 0);
 
 int rcu_cpu_stall_suppress __read_mostly;
 module_param(rcu_cpu_stall_suppress, int, 0644);
@@ -360,6 +360,13 @@ void rcu_enter_nohz(void)
 	smp_mb__after_atomic_inc();  /* Force ordering with next sojourn. */
 	WARN_ON_ONCE(atomic_read(&rdtp->dynticks) & 0x1);
 	local_irq_restore(flags);
+
+	/* If the interrupt queued a callback, get out of dyntick mode. */
+	if (in_irq() &&
+	    (__get_cpu_var(rcu_sched_data).nxtlist ||
+	     __get_cpu_var(rcu_bh_data).nxtlist ||
+	     rcu_preempt_needs_cpu(smp_processor_id())))
+		set_need_resched();
 }
 
 /*
@@ -587,13 +594,9 @@ static void print_cpu_stall(struct rcu_state *rsp)
 	 * See Documentation/RCU/stallwarn.txt for info on how to debug
 	 * RCU CPU stall warnings.
 	 */
-	printk(KERN_ERR "INFO: %s detected stall on CPU %d (t=%lu jiffies %lu ms)\n",
-	       rsp->name, smp_processor_id(), jiffies - rsp->gp_start, jiffies_to_msecs(jiffies - rsp->gp_start) );
-
-/*                                                                                                                   */
-	panic("need to reset because of detecting stall on CPU\n");
-	//trigger_all_cpu_backtrace();
-/*                                                                                                                   */
+	printk(KERN_ERR "INFO: %s detected stall on CPU %d (t=%lu jiffies)\n",
+	       rsp->name, smp_processor_id(), jiffies - rsp->gp_start);
+	trigger_all_cpu_backtrace();
 
 	raw_spin_lock_irqsave(&rnp->lock, flags);
 	if (ULONG_CMP_GE(jiffies, rsp->jiffies_stall))
@@ -1187,7 +1190,7 @@ static void rcu_do_batch(struct rcu_state *rsp, struct rcu_data *rdp)
 {
 	unsigned long flags;
 	struct rcu_head *next, *list, **tail;
-	long count;
+	int count;
 
 	/* If no callbacks are ready, just return.*/
 	if (!cpu_has_callbacks_ready_to_invoke(rdp))
