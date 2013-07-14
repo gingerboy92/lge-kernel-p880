@@ -1356,7 +1356,7 @@ static int imx111_set_mode(struct imx111_info *info, struct imx111_mode *mode)
 		       __func__, mode->xres, mode->yres);    
       return -EINVAL;
     }
-	tegra_camera_set_size(mode->xres, mode->yres);  //                                                                                          
+	//	tegra_camera_set_size(mode->xres, mode->yres);  //                                                                                          
 
 #if 0
 	/* get a list of override regs for the asking frame length, */
