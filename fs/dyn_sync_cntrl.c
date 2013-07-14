@@ -1,7 +1,7 @@
 /*
- * Base from Chad Goodman, chad.goodman@gmail.com
- * modifications to base from faux123
- * Copyright 2012 Chad Goodman
+ * Author: Paul Reioux aka Faux123 <reioux@gmail.com>
+ *
+ * Copyright 2012 Paul Reioux
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -22,7 +22,7 @@
 
 #include <linux/writeback.h>
 
-#define DYN_FSYNC_VERSION 2
+#define DYN_FSYNC_VERSION 1
 
 /*
  * fsync_mutex protects dyn_fsync_active during early suspend / lat resume transitions
@@ -99,7 +99,7 @@ static void dyn_fsync_early_suspend(struct early_suspend *h)
 		early_suspend_active = true;
 #if 1
 		/* flush all outstanding buffers */
-		wakeup_flusher_threads(0,0);
+		wakeup_flusher_threads(0);
 		sync_filesystems(0);
 		sync_filesystems(1);
 #endif
@@ -153,6 +153,3 @@ static void dyn_fsync_exit(void)
 module_init(dyn_fsync_init);
 module_exit(dyn_fsync_exit);
 
-MODULE_AUTHOR("Chad Goodman <chad.goodman@gmail.com>");
-MODULE_DESCRIPTION("F/Sync Control");
-MODULE_LICENSE("GPL");
