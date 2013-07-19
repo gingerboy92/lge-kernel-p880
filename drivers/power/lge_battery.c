@@ -320,6 +320,25 @@ int lge_battery_reference_graph(int __x, battery_graph_prop* ref_battery_graph, 
 //                                                     
 static void lge_battery_get_camera_info(struct lge_battery_info *info, char *filename)
 {
+#if 1
+	int camera_state = 0 ;
+
+	if(tegra_camera_get_power_save_rec())
+	{
+		camera_state = 49;
+	}
+	else
+	{
+		camera_state = 48;
+	}
+
+	DBATT("read recording data is camera_state = [%d]\n", camera_state);
+
+	if(camera_state != info->camera_state){
+		info->camera_state = camera_state;
+	}
+
+#else
 	int fd;
 	int ret;
 	char buf[1];
@@ -337,6 +356,7 @@ static void lge_battery_get_camera_info(struct lge_battery_info *info, char *fil
 	if(buf[0] != info->camera_state){
 		info->camera_state = buf[0];
 	}
+#endif
 }
 
 
