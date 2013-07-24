@@ -455,7 +455,7 @@ int dhd_watchdog_prio = 0;
 module_param(dhd_watchdog_prio, int, 0);
 
 /* DPC thread priority */
-int dhd_dpc_prio = 1
+int dhd_dpc_prio = 1;
 module_param(dhd_dpc_prio, int, 0);
 
 extern int dhd_dongle_memsize;
