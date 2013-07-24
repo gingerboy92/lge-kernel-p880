@@ -48,6 +48,10 @@ DHDCFLAGS += -DWL_SCB_TIMEOUT=10
 # For Passing all multicast packets to host when not in suspend mode.
 DHDCFLAGS += -DPASS_ALL_MCAST_PKTS
 
+# Custom ROAM Settings
+DHDCFLAGS += -DCUSTOM_ROAM_TRIGGER_SETTING=-65
+DHDCFLAGS += -DCUSTOM_ROAM_DELTA_SETTING=15 
+
 # Early suspend
 #DHDCFLAGS += -DDHD_USE_EARLYSUSPEND 
 
