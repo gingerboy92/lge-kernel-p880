@@ -455,10 +455,9 @@ int dhd_watchdog_prio = 0;
 module_param(dhd_watchdog_prio, int, 0);
 
 /* DPC thread priority */
-int dhd_dpc_prio = CUSTOM_DPC_PRIO_SETTING;
+int dhd_dpc_prio = 1
 module_param(dhd_dpc_prio, int, 0);
 
-/* DPC thread priority, -1 to use tasklet */
 extern int dhd_dongle_memsize;
 module_param(dhd_dongle_memsize, int, 0);
 #endif /* DHDTHREAD */
