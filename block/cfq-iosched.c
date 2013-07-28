@@ -20,18 +20,18 @@
  * tunables
  */
 /* max queue in one round of service */
-static const int cfq_quantum = 4;
-static const int cfq_fifo_expire[2] = { 33, 8};
+static const int cfq_quantum = 8;
+static const int cfq_fifo_expire[2] = { HZ / 4, HZ / 8 };
 /* maximum backwards seek, in KiB */
-static const int cfq_back_max = 12582912;
+static const int cfq_back_max = 16 * 1024;
 /* penalty of a backwards seek */
-static const int cfq_back_penalty = 1;
-static const int cfq_slice_sync = 6;
-static int cfq_slice_async = 5;
+static const int cfq_back_penalty = 2;
+static const int cfq_slice_sync = HZ / 10;
+static int cfq_slice_async = HZ / 25;
 static const int cfq_slice_async_rq = 2;
-static int cfq_slice_idle = 0;
-static int cfq_group_idle = 0;
-static const int cfq_target_latency = 300; /* 300 ms */
+static int cfq_slice_idle = HZ / 125;
+static int cfq_group_idle = HZ / 125;
+static const int cfq_target_latency = HZ * 3/10; /* 300 ms */
 static const int cfq_hist_divisor = 4;
 
 /*
@@ -54,9 +54,9 @@ static const int cfq_hist_divisor = 4;
 #define CFQQ_SEEKY(cfqq)	(hweight32(cfqq->seek_history) > 32/8)
 
 #define RQ_CIC(rq)		\
-	((struct cfq_io_context *) (rq)->elv.priv[0])
-#define RQ_CFQQ(rq)		(struct cfq_queue *) ((rq)->elv.priv[1])
-#define RQ_CFQG(rq)		(struct cfq_group *) ((rq)->elv.priv[2])
+	((struct cfq_io_context *) (rq)->elevator_private[0])
+#define RQ_CFQQ(rq)		(struct cfq_queue *) ((rq)->elevator_private[1])
+#define RQ_CFQG(rq)		(struct cfq_group *) ((rq)->elevator_private[2])
 
 static struct kmem_cache *cfq_pool;
 static struct kmem_cache *cfq_ioc_pool;
@@ -1673,14 +1673,14 @@ cfq_merged_requests(struct request_queue *q, struct request *rq,
 					rq_data_dir(next), rq_is_sync(next));
 
 	cfqq = RQ_CFQQ(next);
-  /*
-   * all requests of this queue are merged to other queues, delete it
-   * from the service tree. If it's the active_queue,
-   * cfq_dispatch_requests() will choose to expire it or do idle
-   */
+	/*
+	 * all requests of this queue are merged to other queues, delete it
+	 * from the service tree. If it's the active_queue,
+	 * cfq_dispatch_requests() will choose to expire it or do idle
+	 */
 	if (cfq_cfqq_on_rr(cfqq) && RB_EMPTY_ROOT(&cfqq->sort_list) &&
-	cfqq != cfqd->active_queue)
-	cfq_del_cfqq_rr(cfqd, cfqq);
+	    cfqq != cfqd->active_queue)
+		cfq_del_cfqq_rr(cfqd, cfqq);
 }
 
 static int cfq_allow_merge(struct request_queue *q, struct request *rq,
@@ -3733,12 +3733,12 @@ static void cfq_put_request(struct request *rq)
 
 		put_io_context(RQ_CIC(rq)->ioc);
 
-		rq->elv.priv[0] = NULL;
-		rq->elv.priv[1] = NULL;
+		rq->elevator_private[0] = NULL;
+		rq->elevator_private[1] = NULL;
 
 		/* Put down rq reference on cfqg */
 		cfq_put_cfqg(RQ_CFQG(rq));
-		rq->elv.priv[2] = NULL;
+		rq->elevator_private[2] = NULL;
 
 		cfq_put_queue(cfqq);
 	}
@@ -3827,9 +3827,9 @@ new_queue:
 	cfqq->allocated[rw]++;
 
 	cfqq->ref++;
-	rq->elv.priv[0] = cic;
-	rq->elv.priv[1] = cfqq;
-	rq->elv.priv[2] = cfq_ref_get_cfqg(cfqq->cfqg);
+	rq->elevator_private[0] = cic;
+	rq->elevator_private[1] = cfqq;
+	rq->elevator_private[2] = cfq_ref_get_cfqg(cfqq->cfqg);
 	spin_unlock_irqrestore(q->queue_lock, flags);
 	return 0;
 
@@ -4280,6 +4280,20 @@ static struct blkio_policy_type blkio_policy_cfq;
 
 static int __init cfq_init(void)
 {
+	/*
+	 * could be 0 on HZ < 1000 setups
+	 */
+	if (!cfq_slice_async)
+		cfq_slice_async = 1;
+	if (!cfq_slice_idle)
+		cfq_slice_idle = 1;
+
+#ifdef CONFIG_CFQ_GROUP_IOSCHED
+	if (!cfq_group_idle)
+		cfq_group_idle = 1;
+#else
+		cfq_group_idle = 0;
+#endif
 	if (cfq_slab_setup())
 		return -ENOMEM;
 
