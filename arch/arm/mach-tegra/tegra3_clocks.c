@@ -101,6 +101,13 @@
 #define OSC_CTRL_PLL_REF_DIV_2		(1<<26)
 #define OSC_CTRL_PLL_REF_DIV_4		(2<<26)
 
+#define OSC_FREQ_DET 0x58
+#define OSC_FREQ_DET_TRIG (1<<31)
+
+#define OSC_FREQ_DET_STATUS 0x5C
+#define OSC_FREQ_DET_BUSY (1<<31)
+#define OSC_FREQ_DET_CNT_MASK 0xFFFF
+
 #define PERIPH_CLK_SOURCE_I2S1		0x100
 #define PERIPH_CLK_SOURCE_EMC		0x19c
 #define PERIPH_CLK_SOURCE_OSC		0x1fc
@@ -407,6 +414,33 @@ static inline u32 periph_clk_to_reg(
 		reg = reg_V + ((reg - 3) * offs);
 	}
 	return reg;
+}
+
+unsigned long clk_measure_input_freq(void)
+{
+	u32 clock_autodetect;
+	clk_writel(OSC_FREQ_DET_TRIG | 1, OSC_FREQ_DET);
+	do {} while (clk_readl(OSC_FREQ_DET_STATUS) & OSC_FREQ_DET_BUSY);
+	clock_autodetect = clk_readl(OSC_FREQ_DET_STATUS);
+	if (clock_autodetect >= 732 - 3 && clock_autodetect <= 732 + 3) {
+			return 12000000;
+	} else if (clock_autodetect >= 794 - 3 && clock_autodetect <= 794 + 3) {
+			return 13000000;
+	} else if (clock_autodetect >= 1172 - 3 && clock_autodetect <= 1172 + 3) {
+			return 19200000;
+	} else if (clock_autodetect >= 1587 - 3 && clock_autodetect <= 1587 + 3) {
+			return 26000000;
+	} else if (clock_autodetect >= 1025 - 3 && clock_autodetect <= 1025 + 3) {
+			return 16800000;
+	} else if (clock_autodetect >= 2344 - 3 && clock_autodetect <= 2344 + 3) {
+			return 38400000;
+	} else if (clock_autodetect >= 2928 - 3 && clock_autodetect <= 2928 + 3) {
+			return 48000000;
+	} else {
+			pr_err("%s: Unexpected clock autodetect value %d", __func__, clock_autodetect);
+			BUG();
+			return 0;
+	}
 }
 
 static int clk_div_x1_get_divider(unsigned long parent_rate, unsigned long rate,
@@ -4789,7 +4823,7 @@ static struct cpufreq_frequency_table freq_table_1p3GHz[] = {
 	{ 4,  475000 },
 	{ 5,  640000 },
 	{ 6,  760000 },
-	{ 7,  860000 },
+	{ 7,  880000 },
 	{ 8, 1000000 },
 	{ 9, 1100000 },
 	{10, 1200000 },
@@ -4805,24 +4839,23 @@ static struct cpufreq_frequency_table freq_table_1p4GHz[] = {
 	{ 4,  475000 },
 	{ 5,  620000 },
 	{ 6,  760000 },
-	{ 7,  860000 },
+	{ 7,  880000 },
 	{ 8, 1000000 },
 	{ 9, 1100000 },
 	{10, 1200000 },
 	{11, 1300000 },
-	{12, 1400000 },
-	{13, CPUFREQ_TABLE_END },
+	{12, CPUFREQ_TABLE_END },
 };
 
 static struct cpufreq_frequency_table freq_table_1p5GHz[] = {
 	{ 0,   51000 },
 	{ 1,  102000 },
 	{ 2,  204000 },
-	{ 3,  340000 },
+	{ 3,  306000 },
 	{ 4,  475000 },
 	{ 5,  640000 },
 	{ 6,  760000 },
-	{ 7,  860000 },
+	{ 7,  880000 },
 	{ 8, 1000000 },
 	{ 9, 1100000 },
 	{10, 1200000 },
@@ -4839,26 +4872,25 @@ static struct cpufreq_frequency_table freq_table_1p7GHz[] = {
 	{ 3,  370000 },
 	{ 4,  475000 },
 	{ 5,  620000 },
-	{ 6,  760000 },
-	{ 7,  910000 },
-	{ 8, 1000000 },
-	{ 9, 1150000 },
-	{10, 1300000 },
-	{11, 1400000 },
-	{12, 1500000 },
-	{13, 1600000 },
-	{14, 1700000 },
-	{15, CPUFREQ_TABLE_END },
+	{ 6,  800000 },
+	{ 7, 1000000 },
+	{ 8, 1150000 },
+	{ 9, 1300000 },
+	{10, 1400000 },
+	{11, 1500000 },
+	{12, 1600000 },
+	{13, 1700000 },
+	{14, CPUFREQ_TABLE_END },
 };
 
 static struct tegra_cpufreq_table_data cpufreq_tables[] = {
 	{ freq_table_300MHz, 0,  1 },
 	{ freq_table_900MHz, 1,  1 },
-	{ freq_table_1p0GHz, 2,  8 },
-	{ freq_table_1p3GHz, 2, 10 },
-	{ freq_table_1p4GHz, 2, 11 },
-	{ freq_table_1p5GHz, 2, 12 },
-	{ freq_table_1p7GHz, 2, 12 },
+	{ freq_table_1p0GHz, 1,  8 },
+	{ freq_table_1p3GHz, 1, 10 },
+	{ freq_table_1p4GHz, 1, 11 },
+	{ freq_table_1p5GHz, 1, 12 },
+	{ freq_table_1p7GHz, 1, 12 },
 };
 
 static int clip_cpu_rate_limits(
