@@ -29,6 +29,8 @@
 #include <mach/edp.h>
 #include <linux/slab.h>
 #include <linux/suspend.h>
+#include <linux/gpio.h>
+#include "gpio-names.h"
 
 #include "clock.h"
 #include "cpu-tegra.h"
@@ -139,14 +141,50 @@ static int tegra_thermal_zone_unbind(struct thermal_zone_device *thz,
 	return 0;
 }
 
+
+static int fan_gpio=0;
+#define FAN_GPIO TEGRA_GPIO_PJ2
+static void	OUYA_fan_control(long temp_tj)
+{
+#ifdef TEGRA_THERMAL_CREATE_LEDS
+	int ret=0;
+	if ( fan_gpio == 0 ) {
+		ret = gpio_request(FAN_GPIO, "fan");
+		if (ret < 0)
+			gpio_free(FAN_GPIO);
+		ret = gpio_direction_output(FAN_GPIO, 1);
+		if (ret < 0)
+			gpio_free(FAN_GPIO);
+		fan_gpio=FAN_GPIO;
+	}
+#else
+	fan_gpio=FAN_GPIO;
+#endif		
+	pr_debug("OUYA: Fan[%lu]:",(unsigned long)temp_tj);	
+	if ( temp_tj > 60000) {
+		gpio_set_value(FAN_GPIO, 1);
+		pr_debug(" <Turn on>\n");	
+	}
+	if ( temp_tj < 45000) {
+		gpio_set_value(FAN_GPIO, 0);
+		pr_debug(" <Turn off>\n");			
+	}
+	
+}
+
 static int tegra_thermal_zone_get_temp(struct thermal_zone_device *thz,
 					unsigned long *temp)
 {
 	struct tegra_thermal_device *device = thz->devdata;
 
 	if (!tegra_thermal_suspend)
+	{
 		device->get_temp(device->data, temp);
-
+		
+		/* BARREL: Add Here to check the tj for fan control */	
+		OUYA_fan_control(*temp);
+		
+	}
 	return 0;
 }
 
@@ -570,11 +608,6 @@ static int tegra_skin_device_register(struct tegra_thermal_device *device)
 	struct therm_est_subdevice *skin_dev =
 		kzalloc(sizeof(struct therm_est_subdevice), GFP_KERNEL);
 
-        if (skin_dev == NULL) {
-       	         pr_err("%s: skin_dev unable to alloc data struct.\n", __func__);
-               	 return -ENOMEM;
-       	}
-
 	for (i = 0; i < therm->skin_devs_size; i++) {
 		if (therm->skin_devs[i].id == device->id) {
 			memcpy(skin_dev->coeffs,
@@ -599,14 +632,8 @@ static int tegra_skin_device_register(struct tegra_thermal_device *device)
 					skin_devs_count,
 					therm->skin_temp_offset,
 					therm->skin_period);
-		thermal_skin_device = kzalloc(sizeof(struct tegra_thermal_device), GFP_KERNEL);
-
-	        if (thermal_skin_device == NULL) {
-        	         pr_err("%s: thermal_skin_device unable to alloc data struct.\n", __func__);
-                	 return -ENOMEM;
-         	}
- 
-
+		thermal_skin_device = kzalloc(sizeof(struct tegra_thermal_device),
+							GFP_KERNEL);
 		thermal_skin_device->name = "skin_pred";
 		thermal_skin_device->id = THERMAL_DEVICE_ID_SKIN;
 		thermal_skin_device->data = skin_estimator;
@@ -801,6 +828,7 @@ static int __init temp_tj_debug_init(void)
 	return 0;
 }
 late_initcall(temp_tj_debug_init);
+
 
 #define TEGRA_THERM_DEBUGFS(_name, _device_id, throttle, shutdown) \
 	static int tegra_thermal_##_name##_set(void *data, u64 val) \
