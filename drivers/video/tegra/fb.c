@@ -38,8 +38,6 @@
 #include <mach/fb.h>
 #include <linux/nvhost.h>
 #include <linux/nvmap.h>
-#include <linux/console.h>
-
 
 #include "host/dev.h"
 #include "nvmap/nvmap.h"
@@ -53,9 +51,7 @@ struct tegra_fb_info {
 	struct nvhost_device	*ndev;
 	struct fb_info		*info;
 	bool			valid;
-#if defined (CONFIG_PANICRPT)   
-        atomic_t                in_use; //                                                
-#endif /* CONFIG_PANICRPT */
+
 	struct resource		*fb_mem;
 
 	int			xres;
@@ -64,15 +60,6 @@ struct tegra_fb_info {
 
 /* palette array used by the fbcon */
 static u32 pseudo_palette[16];
-/*
-                                                    
-                                                              
- */
-#if defined (CONFIG_PANICRPT)    
-static int panicrpt_status = -4;
-extern int panicrpt_ispanic (void);
-extern void panicrpt_ready(bool flag);
-#endif /* CONFIG_PANICRPT */
 
 static int tegra_fb_check_var(struct fb_var_screeninfo *var,
 			      struct fb_info *info)
@@ -107,7 +94,6 @@ static int tegra_fb_set_par(struct fb_info *info)
 {
 	struct tegra_fb_info *tegra_fb = info->par;
 	struct fb_var_screeninfo *var = &info->var;
-	struct tegra_dc *dc = tegra_fb->win->dc;
 
 	if (var->bits_per_pixel) {
 		/* we only support RGB ordering for now */
@@ -151,30 +137,17 @@ static int tegra_fb_set_par(struct fb_info *info)
 
 	if (var->pixclock) {
 		bool stereo;
-		unsigned old_len = 0;
 		struct fb_videomode m;
-		struct fb_videomode *old_mode = NULL;
 
 		fb_var_to_videomode(&m, var);
 
-	/* Load framebuffer info with new mode details*/
-	old_mode = info->mode;
-	old_len  = info->fix.line_length;
- 
 		info->mode = (struct fb_videomode *)
 			fb_find_nearest_mode(&m, &info->modelist);
 		if (!info->mode) {
 			dev_warn(&tegra_fb->ndev->dev, "can't match video mode\n");
-			info->mode = old_mode;
 			return -EINVAL;
 		}
 
-	/* Update fix line_length and window stride as per new mode */
-	info->fix.line_length = var->xres * var->bits_per_pixel / 8;
-	info->fix.line_length = round_up(info->fix.line_length,
-		TEGRA_LINEAR_PITCH_ALIGNMENT);
-	tegra_fb->win->stride = info->fix.line_length;
- 
 		/*
 		 * only enable stereo if the mode supports it and
 		 * client requests it
@@ -186,16 +159,7 @@ static int tegra_fb_set_par(struct fb_info *info)
 					FB_VMODE_STEREO_LEFT_RIGHT);
 #endif
 
-	/* Configure DC with new mode */
-	if (tegra_dc_set_fb_mode(dc, info->mode, stereo)) {
-	/* Error while configuring DC, fallback to old mode */
-	dev_warn(&tegra_fb->ndev->dev, "can't configure dc with mode %ux%u\n",
-		info->mode->xres, info->mode->yres);
-		info->mode = old_mode;
-		info->fix.line_length = old_len;
-		tegra_fb->win->stride = old_len;
-		return -EINVAL;
-		}
+		tegra_dc_set_fb_mode(tegra_fb->win->dc, info->mode, stereo);
 
 		tegra_fb->win->w.full = dfixed_const(info->mode->xres);
 		tegra_fb->win->h.full = dfixed_const(info->mode->yres);
@@ -274,31 +238,11 @@ static int tegra_fb_setcmap(struct fb_cmap *cmap, struct fb_info *info)
 		} else {
 			/* High-color schemes*/
 			for (i = 0; i < cmap->len; i++) {
-//                                                                                           
-// refer to NVBUG #901921
-#ifdef CONFIG_FRAMEBUFFER_CONSOLE
-			/* update palette for fbcon */
-			if (start+i < 16) {
-				((u32 *) info->pseudo_palette)[start+i] =
-					((*red >> 8) << info->var.red.offset) |
-					((*green >> 8) << info->var.green.offset) |
-					((*blue >> 8) << info->var.blue.offset);
-			}
-#endif
-//                                                                                           
-
 				dc->fb_lut.r[start+i] = *red++ >> 8;
 				dc->fb_lut.g[start+i] = *green++ >> 8;
 				dc->fb_lut.b[start+i] = *blue++ >> 8;
 			}
-
-//                                                                                           
-#ifdef CONFIG_FRAMEBUFFER_CONSOLE
-		tegra_dc_update_lut(dc, -1, 1);
-#else
-		tegra_dc_update_lut(dc, -1, -1);
-#endif
-//                                                                                           
+			tegra_dc_update_lut(dc, -1, -1);
 		}
 	}
 	return 0;
@@ -340,30 +284,7 @@ static int tegra_fb_pan_display(struct fb_var_screeninfo *var,
 	char __iomem *flush_end;
 	u32 addr;
 
-/*
-                                                    
- */
-#if defined(CONFIG_PANICRPT)    
-    /*
-     * when tegra_fb->in_use is 1, it was just opened console
-     * we have to wait when the surfaceflinger open fb
-     */
-    if ((atomic_read (&tegra_fb->in_use) == 1) && !panicrpt_ispanic ()) {
-	    return 0;
-    }
-    if (panicrpt_ispanic () || !tegra_fb->win->cur_handle) {
-	    /*
-         * when tegra_fb is in sleep(maybe early suspended), don't display report
-         */
-        if (tegra_fb->win->dc->suspended || !tegra_fb->win->dc->enabled) {
-	        return 0;
-        }
-        if (!(tegra_fb->win->flags & TEGRA_WIN_FLAG_ENABLED)) {
-            tegra_fb->win->flags = TEGRA_WIN_FLAG_ENABLED;
-        }
-#else
 	if (!tegra_fb->win->cur_handle) {
-#endif /* CONFIG_PANICRPT */
 		flush_start = info->screen_base + (var->yoffset * info->fix.line_length);
 		flush_end = flush_start + (var->yres * info->fix.line_length);
 
@@ -377,42 +298,12 @@ static int tegra_fb_pan_display(struct fb_var_screeninfo *var,
 		tegra_fb->win->flags = TEGRA_WIN_FLAG_ENABLED;
 		tegra_fb->win->virt_addr = info->screen_base;
 
-//                                                                                           
-#if defined (CONFIG_PANICRPT)
-		
-		if( panicrpt_status >= 0 ) {
-			tegra_dc_update_windows(&tegra_fb->win, 1);
-			tegra_dc_sync_windows(&tegra_fb->win, 1);
-		}
-		else{
-			panicrpt_status++;
-		}
-
-		if( panicrpt_ispanic () ) {
-			//printk ( KERN_INFO " beobki.chung : PANIC STATUS ENABLE \n" );
-			panicrpt_status = 1;
-		}
-
-#else
 		tegra_dc_update_windows(&tegra_fb->win, 1);
 		tegra_dc_sync_windows(&tegra_fb->win, 1);
-
-#endif
-//                                                                                           
 	}
 
 	return 0;
 }
-
-
-//                                                                         
-#if defined (CONFIG_PANICRPT)   
-int panicrpt_status_check( void )
-{
-	return panicrpt_status;
-}
-#endif
-//                                                                         
 
 static void tegra_fb_fillrect(struct fb_info *info,
 			      const struct fb_fillrect *rect)
@@ -549,63 +440,13 @@ static struct fb_ops tegra_fb_ops = {
 	.fb_ioctl = tegra_fb_ioctl,
 };
 
-const struct fb_videomode *tegra_fb_find_best_mode(
-	struct fb_var_screeninfo *var,
-	struct list_head *head)
-{
-	struct list_head *pos;
-	struct fb_modelist *modelist;
-	struct fb_videomode *mode, *best = NULL;
-	int diff = 0;
-
-	list_for_each(pos, head) {
-		int d;
-
-		modelist = list_entry(pos, struct fb_modelist, list);
-		mode = &modelist->mode;
-
-		if (mode->xres >= var->xres && mode->yres >= var->yres) {
-			d = (mode->xres - var->xres) +
-				(mode->yres - var->yres);
-			if (diff < d) {
-				diff = d;
-				best = mode;
-			} else if (diff == d && best &&
-				   mode->refresh > best->refresh)
-				best = mode;
-		}
-	}
-	return best;
-}
-
-static int tegra_fb_activate_mode(struct tegra_fb_info *fb_info,
-				struct fb_var_screeninfo *var)
-{
-	int err;
-	struct fb_info *info = fb_info->info;
-
-	var->activate |= FB_ACTIVATE_FORCE;
-	console_lock();
-	info->flags |= FBINFO_MISC_USEREVENT;
-	err = fb_set_var(info, var);
-	info->flags &= ~FBINFO_MISC_USEREVENT;
-	console_unlock();
-	if (err)
-		return err;
-	return 0;
-}
-
 void tegra_fb_update_monspecs(struct tegra_fb_info *fb_info,
 			      struct fb_monspecs *specs,
 			      bool (*mode_filter)(const struct tegra_dc *dc,
 						  struct fb_videomode *mode))
 {
-	int i;
-	int ret = 0;
 	struct fb_event event;
-	struct fb_info *info = fb_info->info;
-	const struct fb_videomode *best_mode = NULL;
-	struct fb_var_screeninfo var = {0,};
+	int i;
 
 	mutex_lock(&fb_info->info->lock);
 	fb_destroy_modedb(fb_info->info->monspecs.modedb);
@@ -632,56 +473,19 @@ void tegra_fb_update_monspecs(struct tegra_fb_info *fb_info,
 	       sizeof(fb_info->info->monspecs));
 	fb_info->info->mode = specs->modedb;
 
-	/* Prepare a mode db */
 	for (i = 0; i < specs->modedb_len; i++) {
-		if (info->fbops->fb_check_var) {
-			struct fb_videomode m;
-
-			/* Call mode filter to check mode */
-			fb_videomode_to_var(&var, &specs->modedb[i]);
-			if (!(info->fbops->fb_check_var(&var, info))) {
-				fb_var_to_videomode(&m, &var);
-				fb_add_videomode(&m,
+		if (mode_filter) {
+			if (mode_filter(fb_info->win->dc, &specs->modedb[i]))
+				fb_add_videomode(&specs->modedb[i],
 						 &fb_info->info->modelist);
-			}
 		} else {
 			fb_add_videomode(&specs->modedb[i],
 					 &fb_info->info->modelist);
 		}
 	}
 
-	/* Get the best mode from modedb and apply on fb */
-	var.xres = 0;
-	var.yres = 0;
-	best_mode = tegra_fb_find_best_mode(&var, &info->modelist);
-
-	/* Update framebuffer with best mode */
-	fb_videomode_to_var(&var, best_mode);
-
-	/* TODO: Get proper way of getting rid of a 0 bpp */
-	if (!var.bits_per_pixel)
-		var.bits_per_pixel = 32;
-
-	memcpy(&info->var, &var, sizeof(struct fb_var_screeninfo));
-
-	ret = tegra_fb_activate_mode(fb_info, &var);
-	if (ret)
-		return;
-
 	event.info = fb_info->info;
-
-#ifdef CONFIG_FRAMEBUFFER_CONSOLE
-/* Lock the console before sending the noti. Fbconsole
-  * on HDMI might be using console
-  */
-	console_lock();
-#endif
 	fb_notifier_call_chain(FB_EVENT_NEW_MODELIST, &event);
-#ifdef CONFIG_FRAMEBUFFER_CONSOLE
-/* Unlock the console */
-	console_unlock();
-#endif
-
 	mutex_unlock(&fb_info->info->lock);
 }
 
@@ -801,24 +605,6 @@ struct tegra_fb_info *tegra_fb_register(struct nvhost_device *ndev,
 
 	dev_info(&ndev->dev, "probed\n");
 
-//                                                                                           
-#if defined (CONFIG_PANICRPT)  
-	if ( panicrpt_status > 0) {
-		if (fb_data->flags & TEGRA_FB_FLIP_ON_PROBE) {
-			tegra_dc_update_windows(&tegra_fb->win, 1);
-			tegra_dc_sync_windows(&tegra_fb->win, 1);
-		}
-	}
-	else {
-		//tegra_dc_update_windows(&tegra_fb->win, 1);
-		//tegra_dc_sync_windows(&tegra_fb->win, 1);
-		panicrpt_status++;
-	}
-
-	if( panicrpt_status == 0 )
-		panicrpt_ready(true);
-	
-#else
 	if (fb_data->flags & TEGRA_FB_FLIP_ON_PROBE) {
 		tegra_dc_update_windows(&tegra_fb->win, 1);
 		tegra_dc_sync_windows(&tegra_fb->win, 1);
@@ -843,8 +629,7 @@ struct tegra_fb_info *tegra_fb_register(struct nvhost_device *ndev,
 		fb_var_to_videomode(&vmode, &info->var);
 		fb_add_videomode(&vmode, &info->modelist);
 	}
-#endif
-//                                                                                           
+
 	return tegra_fb;
 
 err_iounmap_fb:

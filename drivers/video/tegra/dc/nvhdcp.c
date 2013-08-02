@@ -24,9 +24,6 @@
 #include <linux/wait.h>
 #include <linux/workqueue.h>
 #include <asm/atomic.h>
-#include <linux/gpio.h>
-#include "../../../../arch/arm/mach-tegra/lge/x3/include/mach-tegra/gpio-names.h"
-
 
 #include <mach/dc.h>
 #include <mach/kfuse.h>
@@ -122,7 +119,6 @@ static int nvhdcp_i2c_read(struct tegra_nvhdcp *nvhdcp, u8 reg,
 {
 	int status;
 	int retries = 15;
-	int hdmi_hpd_status=1;
 	struct i2c_msg msg[] = {
 		{
 			.addr = 0x74 >> 1, /* primary link */
@@ -143,13 +139,6 @@ static int nvhdcp_i2c_read(struct tegra_nvhdcp *nvhdcp, u8 reg,
 			nvhdcp_err("disconnect during i2c xfer\n");
 			return -EIO;
 		}
-		//                                                          
-		hdmi_hpd_status = gpio_get_value(TEGRA_GPIO_PN7);
-		if (hdmi_hpd_status != 1) {
-			printk("nvhdcp: hdmi hpd is already low. (hpd=%d) disconnect during i2c read xfer.\n", hdmi_hpd_status);
-			return -EIO;
-		}
-		//                                                          
 		status = i2c_transfer(nvhdcp->client->adapter,
 			msg, ARRAY_SIZE(msg));
 		if ((status < 0) && (retries > 1))
@@ -169,7 +158,6 @@ static int nvhdcp_i2c_write(struct tegra_nvhdcp *nvhdcp, u8 reg,
 {
 	int status;
 	u8 buf[len + 1];
-	int hdmi_hpd_status=1;
 	struct i2c_msg msg[] = {
 		{
 			.addr = 0x74 >> 1, /* primary link */
@@ -188,14 +176,6 @@ static int nvhdcp_i2c_write(struct tegra_nvhdcp *nvhdcp, u8 reg,
 			nvhdcp_err("disconnect during i2c xfer\n");
 			return -EIO;
 		}
-		//                                                          
-		hdmi_hpd_status = gpio_get_value(TEGRA_GPIO_PN7);
-		if (hdmi_hpd_status != 1) {
-			printk("nvhdcp: hdmi hpd is already low. (hpd=%d) disconnect during i2c read xfer.\n", hdmi_hpd_status);
-			return -EIO;
-		}
-		//                                                          
-
 		status = i2c_transfer(nvhdcp->client->adapter,
 			msg, ARRAY_SIZE(msg));
 		if ((status < 0) && (retries > 1))
@@ -860,9 +840,7 @@ static void nvhdcp_downstream_worker(struct work_struct *work)
 		nvhdcp_err("nvhdcp failure - giving up\n");
 		goto err;
 	}
-	mutex_lock(&nvhdcp->lock); 
 	nvhdcp->state = STATE_UNAUTHENTICATED;
-	mutex_unlock(&nvhdcp->lock); 
 
 	/* check plug state to terminate early in case flush_workqueue() */
 	if (!nvhdcp_is_plugged(nvhdcp)) {

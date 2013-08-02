@@ -56,13 +56,6 @@ struct tegra_dc_ext_win {
 	struct nvmap_handle_ref	*cur_handle[TEGRA_DC_NUM_PLANES];
 
 	struct workqueue_struct	*flip_wq;
-/*                                              */
-#if defined(CONFIG_MACH_LGE)
-	dma_addr_t phys_addr;
-	dma_addr_t phys_addr_u;
-	dma_addr_t phys_addr_v;
-#endif	
-/*                                              */
 
 	atomic_t		nr_pending_flips;
 
