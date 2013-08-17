@@ -3,13 +3,8 @@
  *
  * The basic atomic operation of this list is cmpxchg on long.  On
  * architectures that don't have NMI-safe cmpxchg implementation, the
-<<<<<<< HEAD
  * list can NOT be used in NMI handlers.  So code that uses the list in
  * an NMI handler should depend on CONFIG_ARCH_HAVE_NMI_SAFE_CMPXCHG.
-=======
- * list can NOT be used in NMI handler.  So code uses the list in NMI
- * handler should depend on CONFIG_ARCH_HAVE_NMI_SAFE_CMPXCHG.
->>>>>>> f49f23a... lib, Add lock-less NULL terminated single list
  *
  * Copyright 2010,2011 Intel Corp.
  *   Author: Huang Ying <ying.huang@intel.com>
@@ -35,49 +30,18 @@
 #include <asm/system.h>
 
 /**
-<<<<<<< HEAD
-=======
- * llist_add - add a new entry
- * @new:	new entry to be added
- * @head:	the head for your lock-less list
- */
-void llist_add(struct llist_node *new, struct llist_head *head)
-{
-	struct llist_node *entry, *old_entry;
-
-#ifndef CONFIG_ARCH_HAVE_NMI_SAFE_CMPXCHG
-	BUG_ON(in_nmi());
-#endif
-
-	entry = head->first;
-	do {
-		old_entry = entry;
-		new->next = entry;
-		cpu_relax();
-	} while ((entry = cmpxchg(&head->first, old_entry, new)) != old_entry);
-}
-EXPORT_SYMBOL_GPL(llist_add);
-
-/**
->>>>>>> f49f23a... lib, Add lock-less NULL terminated single list
  * llist_add_batch - add several linked entries in batch
  * @new_first:	first entry in batch to be added
  * @new_last:	last entry in batch to be added
  * @head:	the head for your lock-less list
-<<<<<<< HEAD
  *
  * Return whether list is empty before adding.
  */
 bool llist_add_batch(struct llist_node *new_first, struct llist_node *new_last,
-=======
- */
-void llist_add_batch(struct llist_node *new_first, struct llist_node *new_last,
->>>>>>> f49f23a... lib, Add lock-less NULL terminated single list
 		     struct llist_head *head)
 {
 	struct llist_node *entry, *old_entry;
 
-<<<<<<< HEAD
 	entry = head->first;
 	for (;;) {
 		old_entry = entry;
@@ -88,18 +52,6 @@ void llist_add_batch(struct llist_node *new_first, struct llist_node *new_last,
 	}
 
 	return old_entry == NULL;
-=======
-#ifndef CONFIG_ARCH_HAVE_NMI_SAFE_CMPXCHG
-	BUG_ON(in_nmi());
-#endif
-
-	entry = head->first;
-	do {
-		old_entry = entry;
-		new_last->next = entry;
-		cpu_relax();
-	} while ((entry = cmpxchg(&head->first, old_entry, new_first)) != old_entry);
->>>>>>> f49f23a... lib, Add lock-less NULL terminated single list
 }
 EXPORT_SYMBOL_GPL(llist_add_batch);
 
@@ -121,52 +73,17 @@ struct llist_node *llist_del_first(struct llist_head *head)
 {
 	struct llist_node *entry, *old_entry, *next;
 
-<<<<<<< HEAD
 	entry = head->first;
 	for (;;) {
-=======
-#ifndef CONFIG_ARCH_HAVE_NMI_SAFE_CMPXCHG
-	BUG_ON(in_nmi());
-#endif
-
-	entry = head->first;
-	do {
->>>>>>> f49f23a... lib, Add lock-less NULL terminated single list
 		if (entry == NULL)
 			return NULL;
 		old_entry = entry;
 		next = entry->next;
-<<<<<<< HEAD
 		entry = cmpxchg(&head->first, old_entry, next);
 		if (entry == old_entry)
 			break;
 	}
-=======
-		cpu_relax();
-	} while ((entry = cmpxchg(&head->first, old_entry, next)) != old_entry);
->>>>>>> f49f23a... lib, Add lock-less NULL terminated single list
 
 	return entry;
 }
 EXPORT_SYMBOL_GPL(llist_del_first);
-<<<<<<< HEAD
-=======
-
-/**
- * llist_del_all - delete all entries from lock-less list
- * @head:	the head of lock-less list to delete all entries
- *
- * If list is empty, return NULL, otherwise, delete all entries and
- * return the pointer to the first entry.  The order of entries
- * deleted is from the newest to the oldest added one.
- */
-struct llist_node *llist_del_all(struct llist_head *head)
-{
-#ifndef CONFIG_ARCH_HAVE_NMI_SAFE_CMPXCHG
-	BUG_ON(in_nmi());
-#endif
-
-	return xchg(&head->first, NULL);
-}
-EXPORT_SYMBOL_GPL(llist_del_all);
->>>>>>> f49f23a... lib, Add lock-less NULL terminated single list

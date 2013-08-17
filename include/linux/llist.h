@@ -35,7 +35,6 @@
  *
  * The basic atomic operation of this list is cmpxchg on long.  On
  * architectures that don't have NMI-safe cmpxchg implementation, the
-<<<<<<< HEAD
  * list can NOT be used in NMI handlers.  So code that uses the list in
  * an NMI handler should depend on CONFIG_ARCH_HAVE_NMI_SAFE_CMPXCHG.
  *
@@ -60,12 +59,6 @@
 #include <asm/system.h>
 #include <asm/processor.h>
 
-=======
- * list can NOT be used in NMI handler.  So code uses the list in NMI
- * handler should depend on CONFIG_ARCH_HAVE_NMI_SAFE_CMPXCHG.
- */
-
->>>>>>> f49f23a... lib, Add lock-less NULL terminated single list
 struct llist_head {
 	struct llist_node *first;
 };
@@ -140,16 +133,11 @@ static inline void init_llist_head(struct llist_head *list)
  * test whether the list is empty without deleting something from the
  * list.
  */
-<<<<<<< HEAD
 static inline bool llist_empty(const struct llist_head *head)
-=======
-static inline int llist_empty(const struct llist_head *head)
->>>>>>> f49f23a... lib, Add lock-less NULL terminated single list
 {
 	return ACCESS_ONCE(head->first) == NULL;
 }
 
-<<<<<<< HEAD
 static inline struct llist_node *llist_next(struct llist_node *node)
 {
 	return node->next;
@@ -196,11 +184,4 @@ extern bool llist_add_batch(struct llist_node *new_first,
 			    struct llist_head *head);
 extern struct llist_node *llist_del_first(struct llist_head *head);
 
-=======
-void llist_add(struct llist_node *new, struct llist_head *head);
-void llist_add_batch(struct llist_node *new_first, struct llist_node *new_last,
-		     struct llist_head *head);
-struct llist_node *llist_del_first(struct llist_head *head);
-struct llist_node *llist_del_all(struct llist_head *head);
->>>>>>> f49f23a... lib, Add lock-less NULL terminated single list
 #endif /* LLIST_H */
