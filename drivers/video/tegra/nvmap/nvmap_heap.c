@@ -720,7 +720,7 @@ static struct nvmap_heap_block *do_heap_relocate_listblock(
 	if (atomic_read(&handle->pin))
 		goto fail;
 	/* abort if block is mapped */
-	if (atomic_read(&handle->usecount))
+	if (handle->usecount)
 		goto fail;
 
 	if (fast) {
@@ -829,24 +829,19 @@ static void nvmap_heap_compact(struct nvmap_heap *heap,
 
 void nvmap_usecount_inc(struct nvmap_handle *h)
 {
-#ifdef CONFIG_NVMAP_CARVEOUT_COMPACTOR
-	if (h && !h->heap_pgalloc) {
+	if (h->alloc && !h->heap_pgalloc) {
 		mutex_lock(&h->lock);
-		atomic_inc(&h->usecount);
+		h->usecount++;
 		mutex_unlock(&h->lock);
+	} else {
+		h->usecount++;
 	}
-#endif
 }
 
 
 void nvmap_usecount_dec(struct nvmap_handle *h)
 {
-#ifdef CONFIG_NVMAP_CARVEOUT_COMPACTOR
-	if (h && !h->heap_pgalloc) {
-		BUG_ON(atomic_read(&h->usecount) == 0);
-		atomic_dec(&h->usecount);
-	}
-#endif
+	h->usecount--;
 }
 
 /* nvmap_heap_alloc: allocates a block of memory of len bytes, aligned to
