@@ -362,7 +362,7 @@ static void cpufreq_smartmax_freq_change(struct smartmax_info_s *this_smartmax) 
 		}
 	}
 
-	if ((new_freq < DEFAULT_IDEAL_FREQ) && (boost_counter > 0) && !early_suspend_hook)
+	if ((new_freq < DEFAULT_IDEAL_FREQ) && (boost_counter > 0))
 		new_freq = DEFAULT_IDEAL_FREQ;
 
 	if (new_freq!=0){
@@ -370,7 +370,7 @@ static void cpufreq_smartmax_freq_change(struct smartmax_info_s *this_smartmax) 
 	}
 	
 	this_smartmax->ramp_dir = 0;
-}
+};
 
 static inline void cpufreq_smartmax_get_ramp_direction(unsigned int debug_load, unsigned int cur, struct smartmax_info_s *this_smartmax, struct cpufreq_policy *policy, cputime64_t now)
 {
@@ -379,15 +379,8 @@ static inline void cpufreq_smartmax_get_ramp_direction(unsigned int debug_load, 
 	// for at least up_rate:
 	int min_load_adjust, max_load_adjust;
 
-	if (early_suspend_hook)
-	{
-		max_load_adjust = 85;
-		min_load_adjust = 35;
-	} else
-	{
 		max_load_adjust = max_cpu_load;
 		min_load_adjust = min_cpu_load;
-	}
 
 	if (debug_load > max_load_adjust && cur < policy->max
 			&& (cur < this_smartmax->ideal_speed
@@ -480,14 +473,7 @@ static void cpufreq_smartmax_timer(struct smartmax_info_s *this_smartmax) {
 	this_smartmax->cur_cpu_load = debug_load;
 	this_smartmax->old_freq = cur;
 	this_smartmax->ramp_dir = 0;
-
-	if (early_suspend_hook) 
-	{
-		ideal_freq = 51000;
-		boost_counter = 0;
-	}
-	else
-		ideal_freq = DEFAULT_IDEAL_FREQ;
+	ideal_freq = DEFAULT_IDEAL_FREQ;
 
 	if (unlikely(boost_counter > 0))
 		if (++boost_counter > 3)
@@ -765,7 +751,7 @@ static struct attribute_group smartmax_attr_group = { .attrs =
 
 static void dbs_input_event(struct input_handle *handle, unsigned int type,
 		unsigned int code, int value) {
-		if (type == EV_SYN && code == SYN_REPORT && !early_suspend_hook)
+		if (type == EV_SYN && code == SYN_REPORT)
 			boost_counter = 1;
 }
 
