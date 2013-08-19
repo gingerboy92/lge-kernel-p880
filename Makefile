@@ -347,11 +347,11 @@ CHECK		= sparse
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-CFLAGS_MODULE   =
+CFLAGS_MODULE   = -fno-pic -mcpu=cortex-a9 -mfpu=neon -ltcmalloc -fipa-struct-reorg -funroll-loops
 AFLAGS_MODULE   =
 LDFLAGS_MODULE  =
-CFLAGS_KERNEL  = -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -marm -mtune=cortex-a9 -march=armv7-a -mfpu=neon -funswitch-loops --param l2-cache-size=512 -ftree-vectorize -mvectorize-with-neon-quad
-AFLAGS_KERNEL  =-fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -marm -mtune=cortex-a9 -march=armv7-a -mfpu=neon -funswitch-loops --param l2-cache-size=512 -ftree-vectorize -mvectorize-with-neon-quad
+CFLAGS_KERNEL  = -mcpu=cortex-a9 -mfpu=neon -ltcmalloc -fipa-struct-reorg -funroll-loops
+AFLAGS_KERNEL  =
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
 
@@ -364,15 +364,14 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
 
 KBUILD_CPPFLAGS := -D__KERNEL__
 
-KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
-		   -fno-strict-aliasing -fno-common \
-		   -Werror-implicit-function-declaration \
-		   -Wno-format-security \
-                   -fmodulo-sched -fmodulo-sched-allow-regmoves -mtune=cortex-a9 \
-                   -funswitch-loops -fpredictive-commoning -fgcse-after-reload \
-		   -fno-delete-null-pointer-checks
-KBUILD_AFLAGS_KERNEL := -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -marm -mtune=cortex-a9 -march=armv7-a -mfpu=neon -ftree-vectorize -funswitch-loops --param l2-cache-size=512 -mvectorize-with-neon-quad -mcpu=cortex-a9
-KBUILD_CFLAGS_KERNEL := -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -marm -mtune=cortex-a9 -march=armv7-a -mfpu=neon -ftree-vectorize -funswitch-loops --param l2-cache-size=512 -mvectorize-with-neon-quad -mcpu=cortex-a9
+KBUILD_CFLAGS := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
+				-fno-strict-aliasing -fno-common \
+				-Werror-implicit-function-declaration \
+				-Wno-format-security \
+				-fno-delete-null-pointer-checks \
+				-fno-exceptions
+KBUILD_AFLAGS_KERNEL := 
+KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
 KBUILD_AFLAGS_MODULE  := -DMODULE
 KBUILD_CFLAGS_MODULE  := -DMODULE
