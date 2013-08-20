@@ -448,7 +448,11 @@ CONFIG_TEGRA_PLLM_RESTRICTED=y
 CONFIG_TEGRA_LP2_ARM_TWD=y
 # CONFIG_TEGRA_SLOW_CSITE is not set
 # CONFIG_TEGRA_PREINIT_CLOCKS is not set
+<<<<<<< HEAD:arch/arm/configs/lx_rev_a_defconfig
 # CONFIG_TEGRA_PREPOWER_WIFI is not set
+=======
+# CONFIG_GROUPER_HARDBOOT_RECOVERY is not set
+>>>>>>> 72a3d51... Make config option to choose hardboot restart mode (normal or recovery):arch/arm/configs/tegra_p1852_android_defconfig
 
 #
 # Processor Type
