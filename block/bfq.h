@@ -196,6 +196,12 @@ struct bfq_group;
  *                      task associated with the queue it is deemed as soft
  *                      real-time (see the comments to the function
  *                      bfq_bfqq_softrt_next_start())
+ * @last_idle_bklogged: time of the last transition of the @bfq_queue from
+ *                      idle to backlogged
+ * @service_from_backlogged: cumulative service received from the @bfq_queue
+ *                           since the last transition from idle to backlogged
+ * @cic: pointer to the cfq_io_context owning the bfq_queue, set to %NULL if the
+ *	 queue is shared
  *
  * A bfq_queue is a leaf request queue; it can be associated with an io_context
  * or more, if it is async or shared between cooperating processes. @cgroup
@@ -247,6 +253,8 @@ struct bfq_queue {
 	unsigned int raising_coeff;
 	unsigned long last_idle_bklogged;
 	unsigned long service_from_backlogged;
+
+	struct cfq_io_context *cic;
 };
 
 /**
@@ -256,6 +264,8 @@ struct bfq_queue {
  * @rq_pos_tree: rbtree sorted by next_request position,
  *		used when determining if two or more queues
  *		have interleaving requests (see bfq_close_cooperator).
+ * @eqm_lock:  spinlock used to protect all data structures pertaining
+ *             the Early Queue Merge (EQM) mechanism.
  * @busy_queues: number of bfq_queues containing requests (including the
  *		 queue under service, even if it is idling).
  * @raised_busy_queues: number of weight-raised busy bfq_queues.
@@ -323,6 +333,7 @@ struct bfq_data {
 	struct bfq_group *root_group;
 
 	struct rb_root rq_pos_tree;
+	spinlock_t eqm_lock;
 
 	int busy_queues;
 	int raised_busy_queues;
@@ -391,8 +402,9 @@ enum bfqq_state_flags {
 	BFQ_BFQQ_FLAG_sync,		/* synchronous queue */
 	BFQ_BFQQ_FLAG_budget_new,	/* no completion with this budget */
 	BFQ_BFQQ_FLAG_coop,		/* bfqq is shared */
-	BFQ_BFQQ_FLAG_split_coop,	/* shared bfqq will be splitted */
-	BFQ_BFQQ_FLAG_softrt_update,    /* needs softrt-next-start update */
+	BFQ_BFQQ_FLAG_split_coop,	/* shared bfqq will be split */
+	BFQ_BFQQ_FLAG_just_split,	/* queue has just been split */
+	BFQ_BFQQ_FLAG_softrt_update,	/* may need softrt-next-start update */
 };
 
 #define BFQ_BFQQ_FNS(name)						\
@@ -419,6 +431,7 @@ BFQ_BFQQ_FNS(sync);
 BFQ_BFQQ_FNS(budget_new);
 BFQ_BFQQ_FNS(coop);
 BFQ_BFQQ_FNS(split_coop);
+BFQ_BFQQ_FNS(just_split);
 BFQ_BFQQ_FNS(softrt_update);
 #undef BFQ_BFQQ_FNS
 
