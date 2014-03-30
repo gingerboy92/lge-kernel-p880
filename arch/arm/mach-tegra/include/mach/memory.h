@@ -30,12 +30,16 @@
 #endif
 
 #if defined(CONFIG_MACH_GROUPER)
-#define END_MEM		            UL(0xBEA00000)
+#define END_MEM				UL(0xBEA00000)
+#elif defined(CONFIG_MACH_X3)
+#define END_MEM				UL(0xBEC00000)
 #endif
 
 #if defined(CONFIG_KEXEC_HARDBOOT)
 #if defined(CONFIG_MACH_GROUPER)
 #define KEXEC_HB_PAGE_ADDR		UL(0xBEA00000)
+#elif defined(CONFIG_MACH_X3)
+#define KEXEC_HB_PAGE_ADDR		UL(0xBEC00000)
 #else
 #error "Adress for kexec hardboot page not defined"
 #endif
