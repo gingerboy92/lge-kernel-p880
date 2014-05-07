@@ -70,6 +70,7 @@ obj-$(CONFIG_TOUCHSCREEN_W90X900)	+= w90p910_ts.o
 obj-$(CONFIG_TOUCHSCREEN_TPS6507X)	+= tps6507x-ts.o
 obj-$(CONFIG_TOUCHSCREEN_RM31080A)	+= rm31080a_ts.o
 obj-$(CONFIG_TOUCHSCREEN_SYN_RMI4_SPI)  += rmi4/
+obj-y += touchboost.o
 ifeq ($(CONFIG_MACH_X3),y)
 obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_COMMON)	+= lge_touch_core.o
 obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_COMMON)	+= touch_synaptics.o
