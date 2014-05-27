@@ -354,7 +354,6 @@ CFLAGS_KERNEL  = -mcpu=cortex-a9 -mfpu=neon -ltcmalloc -fipa-struct-reorg -funro
 AFLAGS_KERNEL  =
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
-
 # Use LINUXINCLUDE when you must reference the include/ directory.
 # Needed to be compatible with the O= option
 LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
@@ -376,6 +375,16 @@ KBUILD_AFLAGS   := -D__ASSEMBLY__
 KBUILD_AFLAGS_MODULE  := -DMODULE
 KBUILD_CFLAGS_MODULE  := -DMODULE
 KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
+
+ifdef CONFIG_CC_GRAPHITE_OPTIMIZATION
+ KBUILD_CFLAGS      += -fgraphite-identity -floop-parallelize-all -floop-interchange -floop-strip-mine \
+	                   -floop-block
+ endif
+
+ifdef CONFIG_CC_LINK_TIME_OPTIMIZATION
+ KBUILD_CFLAGS        += -flto -fno-toplevel-reorder -fno-fat-lto-objects -ftlo=2
+ endif
+
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
 KERNELRELEASE = $(shell cat include/config/kernel.release 2> /dev/null)
