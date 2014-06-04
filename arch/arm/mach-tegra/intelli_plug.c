@@ -73,10 +73,10 @@ struct ip_cpu_info {
 
 static DEFINE_PER_CPU(struct ip_cpu_info, ip_info);
 
-static unsigned int screen_off_max = UINT_MAX;
+static unsigned int screen_off_max = 475000;
 module_param(screen_off_max, uint, 0644);
 
-#define NR_FSHIFT	3
+#define NR_FSHIFT	2
 static unsigned int nr_fshift = NR_FSHIFT;
 module_param(nr_fshift, uint, 0644);
 
@@ -87,10 +87,10 @@ static unsigned int nr_run_thresholds_full[] = {
 
 static unsigned int nr_run_thresholds_eco[] = {
 /*      1,  2, - on-line cpus target */
-        3,  UINT_MAX /* avg run threads * 2 (e.g., 9 = 2.25 threads) */
+        5,  UINT_MAX /* avg run threads * 2 (e.g., 9 = 2.25 threads) */
         };
 
-static unsigned int nr_run_hysteresis = 4;  /* 0.5 thread */
+static unsigned int nr_run_hysteresis = 2;  /* 0.5 thread */
 module_param(nr_run_hysteresis, uint, 0644);
 
 static unsigned int nr_run_last;
