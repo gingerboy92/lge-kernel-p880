@@ -85,7 +85,7 @@ struct cpuquiet_attribute {
 	static struct cpuquiet_attribute _name ## _attr = {		\
 		.attr = {.name = __stringify(_name), .mode = _mode },	\
 		.show = _show,						\
-		.store = _store						\
+		.store = _store,					\
 		.store_callback = NULL,					\
 		.param = &_name,					\
 }

@@ -577,6 +577,22 @@ unsigned long tegra_cpu_highest_speed(void) {
 	return rate;
 }
 
+unsigned int best_core_to_turn_up (void) {
+    /* mitigate high temperature, 0 -> 3 -> 2 -> 1 */
+    if (!cpu_online (3))
+        return 3;
+
+    if (!cpu_online (2))
+        return 2;
+
+    if (!cpu_online (1))
+        return 1;
+
+    /* NOT found, return >= nr_cpu_id */
+    return nr_cpu_ids;
+}
+EXPORT_SYMBOL(best_core_to_turn_up);
+
 int tegra_cpu_set_speed_cap(unsigned int *speed_cap)
 {
 	int ret = 0;

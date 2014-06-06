@@ -71,11 +71,13 @@ enum {
 
 unsigned int tegra_cpq_max_cpus(void)
 {
+	int max_cpus = pm_qos_request(PM_QOS_MAX_ONLINE_CPUS) ? : 4;
 	return max_cpus;
 }
 
 unsigned int tegra_cpq_min_cpus(void)
 {
+	int min_cpus = pm_qos_request(PM_QOS_MIN_ONLINE_CPUS);
 	return min_cpus;
 }
 

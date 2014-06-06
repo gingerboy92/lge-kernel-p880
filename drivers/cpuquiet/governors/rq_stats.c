@@ -22,6 +22,9 @@
 #include <linux/sched.h>
 #include <linux/kthread.h>
 
+// from cpu-tegra.c
+extern unsigned int best_core_to_turn_up(void);
+
 // from cpuquiet.c
 extern unsigned int tegra_cpq_max_cpus(void);
 extern unsigned int tegra_cpq_min_cpus(void);
@@ -116,16 +119,16 @@ static void update_rq_stats_state(void)
 		index = (nr_cpu_online - 1) * 2;
 		if ((nr_cpu_online < CONFIG_NR_CPUS) && (rq_depth >= nwns_threshold[index])) {
 			if (total_time >= twts_threshold[index]) {
-				if (nr_cpu_online < max_cpus){
-					hotplug_info("UP rq_depth=%d total_time=%lld nwns_threshold[index]=%d twts_threshold[index]=%d nr_cpu_online=%d min_cpus=%d max_cpus=%d\n", rq_depth, total_time, nwns_threshold[index], twts_threshold[index], nr_cpu_online, min_cpus, max_cpus);
-					rq_stats_state = UP;
+            	if (nr_cpu_online < max_cpus){
+            		hotplug_info("UP rq_depth=%d total_time=%lld nwns_threshold[index]=%d twts_threshold[index]=%d nr_cpu_online=%d min_cpus=%d max_cpus=%d\n", rq_depth, total_time, nwns_threshold[index], twts_threshold[index], nr_cpu_online, min_cpus, max_cpus);
+                	rq_stats_state = UP;
                 }
 			}
 		} else if (rq_depth <= nwns_threshold[index+1]) {
 			if (total_time >= twts_threshold[index+1] ) {
-				if ((nr_cpu_online > 1) && (nr_cpu_online > min_cpus)){
-					hotplug_info("DOWN rq_depth=%d total_time=%lld nwns_threshold[index+1]=%d twts_threshold[index+1]=%d nr_cpu_online=%d min_cpus=%d max_cpus=%d\n", rq_depth, total_time, nwns_threshold[index+1], twts_threshold[index+1], nr_cpu_online, min_cpus, max_cpus);
-					rq_stats_state = DOWN;
+            	if ((nr_cpu_online > 1) && (nr_cpu_online > min_cpus)){
+            		hotplug_info("DOWN rq_depth=%d total_time=%lld nwns_threshold[index+1]=%d twts_threshold[index+1]=%d nr_cpu_online=%d min_cpus=%d max_cpus=%d\n", rq_depth, total_time, nwns_threshold[index+1], twts_threshold[index+1], nr_cpu_online, min_cpus, max_cpus);
+                   	rq_stats_state = DOWN;
                 }
 			}
 		} else {
@@ -165,7 +168,7 @@ static bool __rq_stats_work_func(void)
 		sample = true;
 		break;
 	case UP:
-		cpu = cpumask_next_zero(0, cpu_online_mask);
+		cpu = best_core_to_turn_up();
 		up = true;
 		sample = true;
 		break;

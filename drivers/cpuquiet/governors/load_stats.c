@@ -25,6 +25,9 @@
 #include <linux/kernel_stat.h>
 #include <linux/tick.h>
 
+// from cpu-tegra.c
+extern unsigned int best_core_to_turn_up(void);
+
 // from cpuquiet.c
 extern unsigned int tegra_cpq_max_cpus(void);
 extern unsigned int tegra_cpq_min_cpus(void);
@@ -237,14 +240,14 @@ static void update_load_stats_state(void)
 		if ((nr_cpu_online < CONFIG_NR_CPUS) && (load >= load_threshold[index])) {
 			if (total_time >= twts_threshold[index]) {
            		if (nr_cpu_online < max_cpus){
-					hotplug_info("UP load=%d total_time=%lld load_threshold[index]=%d twts_threshold[index]=%d nr_cpu_online=%d min_cpus=%d max_cpus=%d\n", load, total_time, load_threshold[index], twts_threshold[index], nr_cpu_online, min_cpus, max_cpus);
+           			hotplug_info("UP load=%d total_time=%lld load_threshold[index]=%d twts_threshold[index]=%d nr_cpu_online=%d min_cpus=%d max_cpus=%d\n", load, total_time, load_threshold[index], twts_threshold[index], nr_cpu_online, min_cpus, max_cpus);
            	    	load_stats_state = UP;
            	    }
 			}
 		} else if (load <= load_threshold[index+1]) {
 			if (total_time >= twts_threshold[index+1] ) {
            		if ((nr_cpu_online > 1) && (nr_cpu_online > min_cpus)){
-					hotplug_info("DOWN load=%d total_time=%lld load_threshold[index+1]=%d twts_threshold[index+1]=%d nr_cpu_online=%d min_cpus=%d max_cpus=%d\n", load, total_time, load_threshold[index+1], twts_threshold[index+1], nr_cpu_online, min_cpus, max_cpus);
+           			hotplug_info("DOWN load=%d total_time=%lld load_threshold[index+1]=%d twts_threshold[index+1]=%d nr_cpu_online=%d min_cpus=%d max_cpus=%d\n", load, total_time, load_threshold[index+1], twts_threshold[index+1], nr_cpu_online, min_cpus, max_cpus);
                    	load_stats_state = DOWN;
                 }
 			}
@@ -294,7 +297,7 @@ static bool __load_stats_work_func(void)
 		sample = true;
 		break;
 	case UP:
-		cpu = cpumask_next_zero(0, cpu_online_mask);
+		cpu = best_core_to_turn_up();
 		up = true;
 		sample = true;
 		break;
