@@ -3008,6 +3008,7 @@ CONFIG_IIO=y
 #
 # Triggers - standalone
 #
+CONFIG_ZCACHE=y
 CONFIG_XVMALLOC=y
 CONFIG_ZRAM=y
 # CONFIG_ZRAM_DEBUG is not set 
